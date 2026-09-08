@@ -71,6 +71,15 @@ all scoped by `profileId`:
 - **scores** — `{ gameId, hole, par, score, putts }` (per-hole entries; the
   field was renamed from `rating` to `putts`)
 
+### Course typeahead
+
+The new-course form (`components/NewCourseForm.tsx`) offers autocomplete
+suggestions from the [`course-ls`](../../services/course-ls) service:
+`lib/use-course-search.ts` debounces keystrokes (300 ms), cancels in-flight
+requests, and biases by the user's location when geolocation is granted.
+`lib/course-search.ts` never throws — if `NEXT_PUBLIC_COURSE_LS_ENDPOINT` is
+unset or the service errors, the field is plain free text.
+
 ### Cloud sync
 
 `lib/cloud-sync.ts` implements cursor-based sync against the profile-sync service

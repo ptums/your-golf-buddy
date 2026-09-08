@@ -7,7 +7,7 @@ All three services run on **Cloudflare** and deploy from GitHub Actions
 | ----------------------------- | ------------------ | ----------------- |
 | `apps/web`                    | `ygb-web`          | `@opennextjs/cloudflare`, Workers Assets |
 | `services/profile-sync`       | `ygb-profile-sync` | D1 database `ygb-profile-sync` |
-| `services/course-ls`          | `ygb-course-ls`    | —                 |
+| `services/course-ls`          | `ygb-course-ls`    | KV `COURSE_CACHE`, `GOOGLE_MAPS_API_KEY` secret |
 
 ## One-time setup
 
@@ -20,23 +20,44 @@ Create a token at **dash.cloudflare.com → My Profile → API Tokens** with:
 
 - Account · Workers Scripts · Edit
 - Account · D1 · Edit
-- Account · Workers KV Storage · Edit *(future-proofing for course-ls)*
+- Account · Workers KV Storage · Edit *(course-ls cache)*
+- Account · Account Settings · Read
+- User · User Details · Read
 - Zone · Workers Routes · Edit *(only if you attach custom domains)*
+
+Shortcut: the **"Edit Cloudflare Workers"** token template covers everything
+except D1 — add one row, `D1 · Edit`.
 
 ### 2. GitHub repo secrets & variables
 
 **Settings → Secrets and variables → Actions**
 
-| Kind     | Name                        | Value                                        |
-| -------- | --------------------------- | ------------------------------------------- |
-| Secret   | `CLOUDFLARE_API_TOKEN`      | the token from step 1                        |
-| Variable | `CLOUDFLARE_ACCOUNT_ID`     | dashboard → any domain → Account ID          |
-| Variable | `NEXT_PUBLIC_SYNC_ENDPOINT` | `https://ygb-profile-sync.<subdomain>.workers.dev/api` (or your custom domain + `/api`) |
+| Kind     | Name                            | Value                                        |
+| -------- | ------------------------------- | ------------------------------------------- |
+| Secret   | `CLOUDFLARE_API_TOKEN`          | the token from step 1                        |
+| Variable | `CLOUDFLARE_ACCOUNT_ID`         | dashboard → any domain → Account ID          |
+| Variable | `NEXT_PUBLIC_SYNC_ENDPOINT`     | `https://ygb-profile-sync.<subdomain>.workers.dev/api` |
+| Variable | `NEXT_PUBLIC_COURSE_LS_ENDPOINT`| `https://ygb-course-ls.<subdomain>.workers.dev` |
 
-`NEXT_PUBLIC_SYNC_ENDPOINT` is a **build-time** value inlined into the web
-client bundle. `CLOUDFLARE_ACCOUNT_ID` is not secret and is kept as a variable
-so it can gate the deploy workflow — **the deploy jobs are skipped entirely
-until `CLOUDFLARE_ACCOUNT_ID` is set**, so CI stays green before setup is done.
+The two `NEXT_PUBLIC_*` values are **build-time**, inlined into the web client
+bundle. `CLOUDFLARE_ACCOUNT_ID` is not secret and is kept as a variable so it
+can gate the deploy workflow — **the deploy jobs are skipped entirely until
+`CLOUDFLARE_ACCOUNT_ID` is set**, so CI stays green before setup is done.
+
+### 2b. Google Places API key (course-ls)
+
+1. Google Cloud console → enable **Places API (New)**.
+2. Create an API key (APIs & Services → Credentials); restrict it to the Places
+   API and, ideally, to your Worker's requests.
+3. Store it on the Worker:
+
+   ```bash
+   pnpm --filter course-ls exec wrangler secret put GOOGLE_MAPS_API_KEY
+   ```
+
+   Locally: `cp services/course-ls/.dev.vars.example services/course-ls/.dev.vars`
+   and put the key there. Without it, `/courses/search` returns `503` and the
+   web form is a plain text field.
 
 ### 3. Create the D1 database
 
@@ -47,6 +68,16 @@ pnpm exec wrangler d1 create ygb-profile-sync
 
 Copy the printed `database_id` into `services/profile-sync/wrangler.jsonc`
 (replace `REPLACE_WITH_D1_DATABASE_ID`) and commit.
+
+### 3b. Create the course-ls KV namespace
+
+```bash
+pnpm --filter course-ls exec wrangler kv namespace create COURSE_CACHE
+```
+
+Copy the printed `id` into `services/course-ls/wrangler.jsonc` (replace
+`REPLACE_WITH_KV_NAMESPACE_ID`) and commit. (The service runs without it — edge
+cache only — but KV gives you the global cache layer.)
 
 ### 4. First deploy of each Worker
 

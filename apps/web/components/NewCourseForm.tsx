@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { db } from "../lib/db";
+import { useCourseSearch } from "../lib/use-course-search";
 
 export default function NewCourseForm() {
   const router = useRouter();
@@ -9,6 +10,13 @@ export default function NewCourseForm() {
   // form state
   const [courseName, setCourseName] = useState("");
   const [selectedRounds, setSelectedRounds] = useState<9 | 18 | null>(null);
+
+  // typeahead state
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const justPickedRef = useRef(false);
+  const { results, loading, enabled } = useCourseSearch(
+    justPickedRef.current ? "" : courseName,
+  );
 
   // ref to auto‑focus
   const inputRef = useRef<HTMLInputElement>(null);
@@ -64,6 +72,22 @@ export default function NewCourseForm() {
     setSelectedRounds(r);
   };
 
+  const onChangeName = (value: string) => {
+    justPickedRef.current = false;
+    setCourseName(value);
+    setShowSuggestions(true);
+  };
+
+  const onPickSuggestion = (name: string) => {
+    justPickedRef.current = true;
+    setCourseName(name);
+    setShowSuggestions(false);
+    inputRef.current?.focus();
+  };
+
+  const suggestionsVisible =
+    enabled && showSuggestions && !justPickedRef.current && results.length > 0;
+
   // no games → show "Add new course" form
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
@@ -74,14 +98,54 @@ export default function NewCourseForm() {
         >
           Course
         </label>
-        <input
-          id="course"
-          ref={inputRef}
-          type="text"
-          value={courseName}
-          onChange={(e) => setCourseName(e.target.value)}
-          className="w-full bg-white max-w-md p-3 mb-6 border-2 rounded font-sans focus:outline-none focus:border-yellow-500 text-cyan-900 font-semibold"
-        />
+        <div className="relative w-full max-w-md mb-6">
+          <input
+            id="course"
+            ref={inputRef}
+            type="text"
+            autoComplete="off"
+            value={courseName}
+            onChange={(e) => onChangeName(e.target.value)}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => {
+              // let a click on a suggestion register first
+              setTimeout(() => setShowSuggestions(false), 150);
+            }}
+            className="w-full bg-white p-3 border-2 rounded font-sans focus:outline-none focus:border-yellow-500 text-cyan-900 font-semibold"
+          />
+
+          {suggestionsVisible && (
+            <ul className="absolute z-10 mt-1 w-full bg-white border-2 border-amber-200 rounded shadow-lg max-h-64 overflow-auto">
+              {results.map((r) => (
+                <li key={r.placeId}>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => onPickSuggestion(r.name)}
+                    className="w-full text-left px-3 py-2 hover:bg-amber-50 focus:bg-amber-50 focus:outline-none cursor-pointer"
+                  >
+                    <span className="block font-semibold text-slate-800">
+                      {r.name}
+                    </span>
+                    {r.address && (
+                      <span className="block text-xs text-slate-500">
+                        {r.address}
+                        {typeof r.distanceKm === "number" &&
+                          ` · ${r.distanceKm} km`}
+                      </span>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {enabled && loading && courseName.trim().length >= 2 && (
+            <span className="absolute right-3 top-3 text-xs text-slate-400">
+              searching…
+            </span>
+          )}
+        </div>
 
         <div className="flex space-x-4 justify-center">
           <button

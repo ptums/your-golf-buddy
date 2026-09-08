@@ -2,6 +2,5 @@ node_modules/
 .wrangler/
 .dev.vars
 .dev.vars.*
-worker-configuration.d.ts
 dist/
 *.sqlite
