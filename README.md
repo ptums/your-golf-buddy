@@ -28,7 +28,7 @@ notes/          Dated dev journal
 | [`services/course-ls`](./services/course-ls) | 🟡 prototype (mock data) | `ygb-course-ls` |
 | [`apps/mobile`](./apps/mobile) | 🔴 scaffold only | — |
 
-Each app has its own README with detail.
+Each app has its own README with detail. AI agents: see [`AGENTS.md`](./AGENTS.md).
 
 ## How the pieces fit
 
