@@ -1,0 +1,243 @@
+{
+  "clubDrills": [
+    {
+      "club": "Driver",
+      "drills": [
+        {
+          "name": "Driver Drill 1",
+          "description": "Tee up the ball and focus on swinging slowly to feel the club's head making contact and promoting a smooth follow-through.",
+          "focus": "contact and rhythm",
+          "recommendedReps": "10–15 balls per set",
+          "difficulty": "beginner-friendly"
+        },
+        {
+          "name": "Driver Drill 2",
+          "description": "Practice hitting drivers aiming at distant targets, focusing on consistent carry distance to build feel for power.",
+          "focus": "distance control",
+          "recommendedReps": "10–15 balls per set",
+          "difficulty": "beginner-friendly"
+        },
+        {
+          "name": "Driver Drill 3",
+          "description": "Swing the driver with eyes closed after setup to heighten awareness of body movement and club position.",
+          "focus": "feel and body awareness",
+          "recommendedReps": "10–15 swings per set",
+          "difficulty": "beginner-friendly"
+        }
+      ]
+    },
+    {
+      "club": "5-Wood",
+      "drills": [
+        {
+          "name": "5-Wood Drill 1",
+          "description": "Hit from the fairway or mat, focusing on sweeping the ball to improve contact and launch.",
+          "focus": "contact and sweep",
+          "recommendedReps": "10–15 balls per set",
+          "difficulty": "beginner-friendly"
+        },
+        {
+          "name": "5-Wood Drill 2",
+          "description": "Aim at targets 180-220 yards away and try to land balls consistently for distance feel.",
+          "focus": "distance control",
+          "recommendedReps": "10–15 balls per set",
+          "difficulty": "beginner-friendly"
+        },
+        {
+          "name": "5-Wood Drill 3",
+          "description": "Swing the 5-wood in slow motion without a ball to promote smooth rhythm and transitions.",
+          "focus": "rhythm and transition",
+          "recommendedReps": "10–15 swings per set",
+          "difficulty": "beginner-friendly"
+        }
+      ]
+    },
+    {
+      "club": "Hybrid",
+      "drills": [
+        {
+          "name": "Hybrid Drill 1",
+          "description": "Hit hybrids from various lies, focusing on sweeping motions for consistent contact.",
+          "focus": "contact and launch",
+          "recommendedReps": "10–15 balls per set",
+          "difficulty": "beginner-friendly"
+        },
+        {
+          "name": "Hybrid Drill 2",
+          "description": "Aim at intermediate targets to build accuracy and distance control with the hybrid.",
+          "focus": "accuracy and distance control",
+          "recommendedReps": "10–15 balls per set",
+          "difficulty": "beginner-friendly"
+        },
+        {
+          "name": "Hybrid Drill 3",
+          "description": "Swing with a pause at the top to feel weight shift and maintain club control.",
+          "focus": "weight shift and control",
+          "recommendedReps": "10–15 balls per set",
+          "difficulty": "beginner-friendly"
+        }
+      ]
+    },
+    {
+      "club": "6-Iron",
+      "drills": [
+        {
+          "name": "6-Iron Drill 1",
+          "description": "Hit shots with feet together to improve balance and feel for the club's weight during the swing.",
+          "focus": "balance and club weight",
+          "recommendedReps": "10–15 balls per set",
+          "difficulty": "beginner-friendly"
+        },
+        {
+          "name": "6-Iron Drill 2",
+          "description": "Swing at 50% speed to emphasize smooth tempo and achieve consistent distance.",
+          "focus": "tempo and distance control",
+          "recommendedReps": "10–15 balls per set",
+          "difficulty": "beginner-friendly"
+        },
+        {
+          "name": "6-Iron Drill 3",
+          "description": "Practice one-handed swings to build feel for arm and body synchronization.",
+          "focus": "sync and feel",
+          "recommendedReps": "10–15 swings per set",
+          "difficulty": "beginner-friendly"
+        }
+      ]
+    },
+    {
+      "club": "7-Iron",
+      "drills": [
+        {
+          "name": "7-Iron Drill 1",
+          "description": "Hit punch shots keeping the ball low to develop control and trajectory feel.",
+          "focus": "control and trajectory",
+          "recommendedReps": "10–15 balls per set",
+          "difficulty": "beginner-friendly"
+        },
+        {
+          "name": "7-Iron Drill 2",
+          "description": "Focus on rotating hips through impact for better power and swing consistency.",
+          "focus": "hip rotation and power",
+          "recommendedReps": "10–15 balls per set",
+          "difficulty": "beginner-friendly"
+        },
+        {
+          "name": "7-Iron Drill 3",
+          "description": "Hold the finish position after each swing to check and improve balance.",
+          "focus": "balance and finish",
+          "recommendedReps": "10–15 balls per set",
+          "difficulty": "beginner-friendly"
+        }
+      ]
+    },
+    {
+      "club": "8-Iron",
+      "drills": [
+        {
+          "name": "8-Iron Drill 1",
+          "description": "Hit to targets at 130-150 yards, focusing on accuracy and ball stop.",
+          "focus": "accuracy and stopping power",
+          "recommendedReps": "10–15 balls per set",
+          "difficulty": "beginner-friendly"
+        },
+        {
+          "name": "8-Iron Drill 2",
+          "description": "Focus on shoulder turn in the backswing for consistent power generation.",
+          "focus": "shoulder turn and power",
+          "recommendedReps": "10–15 balls per set",
+          "difficulty": "beginner-friendly"
+        },
+        {
+          "name": "8-Iron Drill 3",
+          "description": "Hit alternating full and punch shots to control distance variations.",
+          "focus": "distance control",
+          "recommendedReps": "10–15 balls per set",
+          "difficulty": "beginner-friendly"
+        }
+      ]
+    },
+    {
+      "club": "9-Iron",
+      "drills": [
+        {
+          "name": "9-Iron Drill 1",
+          "description": "Aim at short-range targets (100-120 yards) for precision approach shots.",
+          "focus": "precision and approach",
+          "recommendedReps": "10–15 balls per set",
+          "difficulty": "beginner-friendly"
+        },
+        {
+          "name": "9-Iron Drill 2",
+          "description": "Hit with a shortened backswing to emphasize control and acceleration.",
+          "focus": "control and acceleration",
+          "recommendedReps": "10–15 balls per set",
+          "difficulty": "beginner-friendly"
+        },
+        {
+          "name": "9-Iron Drill 3",
+          "description": "Practice knockdown shots for low-flight control and consistency.",
+          "focus": "trajectory control",
+          "recommendedReps": "10–15 balls per set",
+          "difficulty": "beginner-friendly"
+        }
+      ]
+    },
+    {
+      "club": "Pitching Wedge",
+      "drills": [
+        {
+          "name": "3 Check points",
+          "description": "Short shots swing ankle to ankle, Medium shots swing knee to knee, Long shots hip to hip",
+          "focus": "distance control",
+          "recommendedReps": "10–15 balls per set",
+          "difficulty": "beginner-friendly"
+        },
+        {
+          "name": "Short Shots",
+          "description": "Use your putting stroke with a pitching wedge",
+          "focus": "short shots",
+          "recommendedReps": "10–15 balls per set",
+          "difficulty": "beginner-friendly"
+        }
+      ]
+    },
+    {
+      "club": "Sand Wedge",
+      "drills": [
+        {
+          "name": "Sand Wedge Drill 1",
+          "description": "Practice high soft lobs around the green to develop touch and loft feel.",
+          "focus": "touch and loft",
+          "recommendedReps": "10–15 balls per set",
+          "difficulty": "beginner-friendly"
+        },
+        {
+          "name": "Sand Wedge Drill 2",
+          "description": "Hit long shots focusing on carry distance and control.",
+          "focus": "carry control",
+          "recommendedReps": "10–15 balls per set",
+          "difficulty": "beginner-friendly"
+        },
+        {
+          "name": "Sand Wedge Drill 3",
+          "description": "Practice fairway chips for low runners and overall versatility.",
+          "focus": "versatility and low shots",
+          "recommendedReps": "10–15 balls per set",
+          "difficulty": "beginner-friendly"
+        }
+      ]
+    },
+    {
+      "club": "Putter",
+      "drills": [
+        {
+          "name": "Visualize the putt",
+          "description": "Take a good look at the hole. Then take a few practice putts. Look at the line. Look at the hole. One more practice swing. Line up putt and and keep the visual of the hole in your head.",
+          "focus": "accuracy",
+          "recommendedReps": "10–15 putts per set",
+          "difficulty": "beginner-friendly"
+        }
+      ]
+    }
+  ]
+}

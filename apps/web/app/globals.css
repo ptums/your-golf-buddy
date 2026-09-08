@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+.container {
+  @apply flex justify-between;
+}
+
+.orange-marble-base {
+  @apply rounded-full flex items-center justify-center font-bold text-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2;
+}

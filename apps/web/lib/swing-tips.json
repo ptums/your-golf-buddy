@@ -1,0 +1,494 @@
+[
+  {
+    "club": "Driver",
+    "ballPosition": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": 2
+    },
+    "stanceWidth": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": [1, 7],
+      "note": "2 marks right foot, 6 marks left foot"
+    },
+    "weightDistribution": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": [4, 5]
+    },
+    "lieAdjustments": {
+      "teeBox": {
+        "target": "Front of the center-left part of the ball. Back of ball should be visible",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [2]
+        },
+        "swing": "sweep through"
+      }
+    }
+  },
+  {
+    "club": "5-Wood",
+    "ballPosition": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": 2
+    },
+    "stanceWidth": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": [2, 6],
+      "note": "2 marks right foot, 6 marks left foot"
+    },
+    "weightDistribution": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": [5]
+    },
+    "lieAdjustments": {
+      "teeBox": {
+        "target": "Front of the center part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [2]
+        },
+        "swing": "sweep smoothly through the ball"
+      },
+      "fairway": {
+        "target": "front of the center part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [2]
+        },
+        "swing": "brush the grass"
+      },
+      "rough": {
+        "target": "Behind the center part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [4]
+        },
+        "swing": "strong sweep"
+      },
+      "uphillLie": {
+        "target": "Front of the center-right part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [2]
+        },
+        "swing": "smooth swing"
+      },
+      "downhillLie": {
+        "target": "Behind the center-left part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [4]
+        },
+        "swing": "short (compact) swing, stay balanced"
+      }
+    }
+  },
+  {
+    "club": "Hybrid",
+    "ballPosition": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": 3
+    },
+    "stanceWidth": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": [2, 6],
+      "note": "2 marks right foot, 6 marks left foot"
+    },
+    "weightDistribution": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": [5]
+    },
+    "lieAdjustments": {
+      "teeBox": {
+        "target": "front of the center part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [2]
+        },
+        "swing": "shallow sweep through"
+      },
+      "fairway": {
+        "target": "front of the center part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [4]
+        },
+        "swing": "smooth brush"
+      },
+      "rough": {
+        "target": "behind the center part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [5]
+        },
+        "swing": "cut through thick grass"
+      },
+      "uphillLie": {
+        "target": "front of the center-right part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [2]
+        },
+        "swing": "swing gently with the slope"
+      },
+      "downhillLie": {
+        "target": "behind the center-left part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [5]
+        },
+        "swing": "controlled swing with less follow-through"
+      }
+    }
+  },
+  {
+    "club": "6-Iron",
+    "ballPosition": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": 3
+    },
+    "stanceWidth": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": [2, 6],
+      "note": "2 marks right foot, 6 marks left foot"
+    },
+    "weightDistribution": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": [4]
+    },
+    "lieAdjustments": {
+      "fairway": {
+        "target": "front of the center part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [5]
+        },
+        "swing": "descend through the ball"
+      },
+      "rough": {
+        "target": "behind the center part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [5]
+        },
+        "swing": "drive through thick grass"
+      },
+      "uphillLie": {
+        "target": "front of the center-right part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [2]
+        },
+        "swing": "match shoulder angle to slope"
+      },
+      "downhillLie": {
+        "target": "behind the center-left part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [5]
+        },
+        "swing": "keep swing short and balanced"
+      }
+    }
+  },
+  {
+    "club": "7-Iron",
+    "ballPosition": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": 3
+    },
+    "stanceWidth": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": [3, 5],
+      "note": "2 marks right foot, 6 marks left foot"
+    },
+    "weightDistribution": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": [3, 4]
+    },
+    "lieAdjustments": {
+      "fairway": {
+        "target": "front of the center part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [3]
+        },
+        "swing": "crisp contact with downward strike"
+      },
+      "rough": {
+        "target": "behind the center part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [5]
+        },
+        "swing": "commit through thick grass"
+      },
+      "uphillLie": {
+        "target": "front of the center-right part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [2]
+        },
+        "swing": "swing along the slope"
+      },
+      "downhillLie": {
+        "target": "behind the center-left part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [5]
+        },
+        "swing": "keep weight forward and swing compact"
+      }
+    }
+  },
+  {
+    "club": "8-Iron",
+    "ballPosition": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": 4
+    },
+    "stanceWidth": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": [3, 5],
+      "note": "2 marks right foot, 6 marks left foot"
+    },
+    "weightDistribution": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": [3, 4]
+    },
+    "lieAdjustments": {
+      "fairway": {
+        "target": "front of the center part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [3]
+        },
+        "swing": "downward strike, clip the turf"
+      },
+      "rough": {
+        "target": "behind the center part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [5]
+        },
+        "swing": "control club through resistance"
+      },
+      "uphillLie": {
+        "target": "front of the center-right part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [2]
+        },
+        "swing": "smooth swing matching slope"
+      },
+      "downhillLie": {
+        "target": "behind the center-left part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [5]
+        },
+        "swing": "keep hands forward and shorten the swing"
+      }
+    }
+  },
+  {
+    "club": "9-Iron",
+    "ballPosition": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": 4
+    },
+    "stanceWidth": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": [3, 4],
+      "note": "2 marks right foot, 6 marks left foot"
+    },
+    "weightDistribution": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": [3, 4]
+    },
+    "lieAdjustments": {
+      "fairway": {
+        "target": "front of the center part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [3]
+        },
+        "swing": "brush down and through"
+      },
+      "rough": {
+        "target": "behind the center part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [5]
+        },
+        "swing": "punch through thick grass"
+      },
+      "uphillLie": {
+        "target": "front of the center-right part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [2]
+        },
+        "swing": "match slope and follow through"
+      },
+      "downhillLie": {
+        "target": "behind the center-left part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [5]
+        },
+        "swing": "low compact swing"
+      }
+    }
+  },
+  {
+    "club": "Pitching Wedge",
+    "ballPosition": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": 5
+    },
+    "stanceWidth": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": [4, 5],
+      "note": "2 marks right foot, 6 marks left foot"
+    },
+    "weightDistribution": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": [4]
+    },
+    "lieAdjustments": {
+      "fairway": {
+        "target": "front of the center part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [5]
+        },
+        "swing": "hit down with control"
+      },
+      "rough": {
+        "target": "behind the center part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [5]
+        },
+        "swing": "strike with commitment"
+      },
+      "uphillLie": {
+        "target": "front of the center-right part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [1]
+        },
+        "swing": "use the slope to help the lift"
+      },
+      "downhillLie": {
+        "target": "behind the center-left part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [5]
+        },
+        "swing": "keep wrists quiet and controlled"
+      }
+    }
+  },
+  {
+    "club": "Sand Wedge",
+    "ballPosition": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": 3
+    },
+    "stanceWidth": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": [3, 4],
+      "note": "2 marks right foot, 6 marks left foot"
+    },
+    "weightDistribution": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": [2, 3]
+    },
+    "lieAdjustments": {
+      "fairway": {
+        "target": "front of the center part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [5]
+        },
+        "swing": "clip the turf under the ball"
+      },
+      "rough": {
+        "target": "behind the center part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [5]
+        },
+        "swing": "steep swing through thick grass"
+      },
+      "bunker": {
+        "target": "blade of sand 1–2 inches behind the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [2]
+        },
+        "swing": "splash under the ball, not at it"
+      },
+      "uphillLie": {
+        "target": "front of the center-right part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [2]
+        },
+        "swing": "swing with slope, soft follow-through"
+      },
+      "downhillLie": {
+        "target": "behind the center-left part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [5]
+        },
+        "swing": "stay quiet and stable"
+      }
+    }
+  },
+  {
+    "club": "Putter",
+    "ballPosition": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": 3
+    },
+    "stanceWidth": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": [4],
+      "note": "2 marks right foot, 6 marks left foot"
+    },
+    "weightDistribution": {
+      "numerOfPositions": [1, 2, 3, 4, 5, 6, 7],
+      "position": [4]
+    },
+    "lieAdjustments": {
+      "green": {
+        "target": "blade of grass just in front of the center part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [2]
+        },
+        "swing": "smooth stroke through the ball"
+      },
+      "fringe": {
+        "target": "blade of grass in front of the center-left part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [5]
+        },
+        "swing": "slightly stronger stroke through longer grass"
+      },
+      "uneven": {
+        "target": "front of the center part of the ball",
+        "grip": {
+          "numerOfPositions": [1, 2, 3, 4, 5],
+          "position": [3]
+        },
+        "swing": "maintain balance and stroke rhythm"
+      }
+    }
+  }
+]
