@@ -20,7 +20,7 @@ pnpm env:sync             # fans them out to apps/web/.env.local and services/co
 
 `.env` holds: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`,
 `GOOGLE_MAPS_API_KEY`, and the two `NEXT_PUBLIC_*` URLs. It is gitignored.
-The root `pnpm deploy` and `pnpm cf:*` scripts load it automatically
+The root `pnpm deploy:*` and `pnpm cf:*` scripts load it automatically
 (`scripts/with-env.sh`); alternatively run
 `pnpm --filter profile-sync exec wrangler login` and leave the Cloudflare
 values blank.
@@ -114,7 +114,7 @@ pnpm deploy:web            # opennext build + deploy → ygb-web
 Also set the same two URLs as GitHub repo **variables** (step 2) so CI builds
 web with them too.
 
-`pnpm deploy` (no suffix) deploys all three at once — fine for later pushes once
+`pnpm deploy:all` deploys all three at once — fine for later pushes once
 the URLs are stable, but use the split flow for the first deploy.
 
 ### 7. (Optional) import existing sync data

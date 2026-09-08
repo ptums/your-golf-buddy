@@ -55,7 +55,7 @@ Node 22, pnpm 10. `apps/mobile` uses its own `npm install` (not the workspace).
 - **One config file: repo-root `.env`** (gitignored). `pnpm env:sync` generates
   `apps/web/.env.local` and `services/course-ls/.dev.vars` from it — those are
   generated, don't hand-edit or commit them. `scripts/with-env.sh` loads `.env`
-  for the `pnpm deploy` / `pnpm cf:*` scripts.
+  for the `pnpm deploy:*` / `pnpm cf:*` scripts.
 - Commit style: conventional prefixes (`feat(web):`, `fix(profile-sync):`, …).
   End commit messages with the `Co-Authored-By` / `Claude-Session` trailers the
   session specifies.
