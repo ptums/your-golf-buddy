@@ -7,11 +7,11 @@
   "observability": {
     "enabled": true
   },
-  "routes": [{ "pattern": "profile-sync.yourbuddy.golf", "custom_domain": true }],
+  "routes": [{ "pattern": "api.yourbuddy.golf", "custom_domain": true }],
   "vars": {
     // Browsers allowed to call this API. Drop the *.workers.dev entry once the
     // app is fully on yourbuddy.golf.
-    "CORS_ORIGINS": "https://web.yourbuddy.golf,https://yourbuddy.golf,https://ygb-web.peter-686.workers.dev,http://localhost:3002"
+    "CORS_ORIGINS": "https://yourbuddy.golf,https://www.yourbuddy.golf,https://ygb-web.peter-686.workers.dev,http://localhost:3002"
   },
   "d1_databases": [
     {

@@ -2,12 +2,14 @@
 
 | Host | Worker |
 | ---- | ------ |
-| `web.yourbuddy.golf` (and `yourbuddy.golf`) | `ygb-web` (the app) |
-| `profile-sync.yourbuddy.golf` | `ygb-profile-sync` |
-| `course-ls.yourbuddy.golf` | `ygb-course-ls` |
+| `yourbuddy.golf` | `ygb-web` (the app) |
+| `api.yourbuddy.golf` | `ygb-profile-sync` |
+| `courses.yourbuddy.golf` | `ygb-course-ls` |
 
-The old `*.peter-686.workers.dev` URLs keep working — they're kept in the
-services' `CORS_ORIGINS` during the switch, and Workers stay reachable on both.
+Adding `routes` to a Worker **disables its `*.workers.dev` subdomain** (unless
+you also set `"workers_dev": true`). So once a Worker has a custom-domain route,
+`ygb-*.peter-686.workers.dev` returns 404 — the client must call the custom
+domain. Flip the repo variables (§3) in the *same* deploy that adds the routes.
 
 ## 1. Add the zone to Cloudflare (manual, one-time)
 
@@ -32,25 +34,25 @@ cert automatically. Push to `main` (or `pnpm deploy:services` + `pnpm deploy:web
 
 | Name | New value |
 | ---- | --------- |
-| `NEXT_PUBLIC_SYNC_ENDPOINT` | `https://profile-sync.yourbuddy.golf` |
-| `NEXT_PUBLIC_COURSE_LS_ENDPOINT` | `https://course-ls.yourbuddy.golf` |
+| `NEXT_PUBLIC_SYNC_ENDPOINT` | `https://api.yourbuddy.golf` |
+| `NEXT_PUBLIC_COURSE_LS_ENDPOINT` | `https://courses.yourbuddy.golf` |
 
 Then trigger a web deploy (push any change under `apps/web/`, or re-run the
 Deploy workflow) so the new endpoints are baked into the client bundle.
 
-`apps/mobile/app.json` → `expo.extra.webUrl` is `https://web.yourbuddy.golf`;
+`apps/mobile/app.json` → `expo.extra.webUrl` is `https://yourbuddy.golf`;
 rebuild the app with EAS after changing it.
 
 ## 4. Verify
 
 ```bash
-curl -sI https://web.yourbuddy.golf | head -1
-curl -s  https://profile-sync.yourbuddy.golf/v1/health           # {"ok":true}
-curl -s  "https://course-ls.yourbuddy.golf/courses/search?q=pebble+beach" | head -c 80
+curl -sI https://yourbuddy.golf | head -1
+curl -s  https://api.yourbuddy.golf/v1/health           # {"ok":true}
+curl -s  "https://courses.yourbuddy.golf/courses/search?q=pebble+beach" | head -c 80
 ```
 
-Open `https://web.yourbuddy.golf`, register/restore a profile, add a round,
-enable sync — confirm the network calls go to `profile-sync.yourbuddy.golf` and
+Open `https://yourbuddy.golf`, register/restore a profile, add a round,
+enable sync — confirm the network calls go to `api.yourbuddy.golf` and
 succeed. (`yourbuddy.golf` also serves the app.)
 
 ## 5. Tighten (after it's confirmed working)
