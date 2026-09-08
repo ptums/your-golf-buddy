@@ -12,6 +12,7 @@ import { checkSyncState } from "./sync/state.js";
 import { pushChanges } from "./sync/push.js";
 import { pullChanges } from "./sync/pull.js";
 import { deleteProfileData } from "./sync/delete.js";
+import { runBackup } from "./backup.js";
 
 const routes = new Hono<AuthedEnv>();
 
@@ -57,7 +58,34 @@ routes.post("/sync/delete", async (c) =>
   c.json(await deleteProfileData(getDb(c.env.DB), c.get("profileId"))),
 );
 
-const app = new Hono<{ Bindings: Env }>();
+// Unauthenticated client-error sink → Analytics Engine. Rate-limited by IP.
+routes.post("/log", async (c) => {
+  if (!c.env.TELEMETRY) return c.body(null, 204);
+
+  const ip = c.req.header("cf-connecting-ip") ?? "0.0.0.0";
+  const outcome = await c.env.LOG_LIMITER?.limit({ key: `log:${ip}` });
+  if (outcome && !outcome.success) return c.body(null, 429);
+
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  const message = String(body.message ?? "").slice(0, 500);
+  if (!message) return c.body(null, 204);
+  const level = String(body.level ?? "error").slice(0, 24);
+
+  c.env.TELEMETRY.writeDataPoint({
+    blobs: [
+      message,
+      String(body.stack ?? "").slice(0, 2000),
+      String(body.url ?? "").slice(0, 300),
+      (c.req.header("user-agent") ?? "").slice(0, 300),
+      level,
+    ],
+    doubles: [1],
+    indexes: [level],
+  });
+  return c.body(null, 204);
+});
+
+export const app = new Hono<{ Bindings: Env }>();
 
 app.use("*", async (c, next) => {
   const configured = (c.env.CORS_ORIGINS ?? "*")
@@ -86,4 +114,20 @@ app.onError((err, c) => {
   return c.json({ status: "error", message }, 500);
 });
 
-export default app;
+export default {
+  fetch: app.fetch,
+  // Nightly D1 -> R2 backup (cron in wrangler.jsonc).
+  async scheduled(
+    _controller: ScheduledController,
+    env: Env,
+    ctx: ExecutionContext,
+  ): Promise<void> {
+    if (!env.BACKUPS) return;
+    ctx.waitUntil(
+      runBackup(getDb(env.DB), env.BACKUPS)
+        .then((key) => console.log("d1 backup written:", key))
+        .catch((err) => console.error("d1 backup failed:", err)),
+    );
+  },
+};
+

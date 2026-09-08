@@ -4,6 +4,7 @@ import "./globals.css";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import SyncManagerInitializer from "@/components/SyncManagerInitializer";
 import SyncNotification from "@/components/SyncNotification";
+import ErrorLogger from "@/components/ErrorLogger";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://yourbuddy.golf"),
@@ -55,6 +56,7 @@ export default function RootLayout({
         <PWAInstallPrompt />
         <SyncManagerInitializer />
         <SyncNotification />
+        <ErrorLogger />
         <script
           dangerouslySetInnerHTML={{
             __html: `

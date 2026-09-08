@@ -90,6 +90,7 @@ Base path `/api`, also served at the root. Routes in `src/index.ts`.
 | `POST /api/v1/sync`    | Legacy alias for `/api/sync/push`.                          |
 | `POST /api/sync/pull`  | Rows changed since the client's cursors (`limit` 1–1000, default 100). `{ changes, serverCursors }`. Games carry `course_external_id`, scores carry `game_external_id`. |
 | `POST /api/sync/delete`| Hard-delete every server row for the caller's profile. `{ status:"ok", deleted }`. |
+| `POST /api/log`        | Client-error sink → Analytics Engine (`TELEMETRY` binding). No auth; IP rate-limited (30/min, `LOG_LIMITER`). Body `{ message, stack?, url?, level? }`. Always `204`. Used by the web app's global error handler (`apps/web/lib/error-logger.ts`). |
 
 **Cursors**: `max(updated_at, deleted_at)` per table, ISO-8601. `pull` returns
 rows where `updated_at > cursor` OR `deleted_at > cursor`, ordered by `updated_at`.
@@ -100,12 +101,22 @@ rows where `updated_at > cursor` OR `deleted_at > cursor`, ordered by `updated_a
 **CORS**: origins from the `CORS_ORIGINS` var in `wrangler.jsonc` (`*` by
 default — tighten to the web origin for production).
 
+## Nightly backup
+
+A cron trigger (`17 3 * * *`, `wrangler.jsonc` → `triggers.crons`) runs
+`scheduled()` in `src/index.ts`, which calls `runBackup()` (`src/backup.ts`):
+dumps all four tables to the `ygb-backups` R2 bucket as one JSON object at
+`d1/<date>/<timestamp>.json`, then deletes dumps older than 30 days. Needs
+Workers Paid for the cron; create the bucket with `pnpm cf:r2:create`. Restore
+steps are in `docs/deploy.md`.
+
 ## Deploy
 
 See [`docs/deploy.md`](../../docs/deploy.md). One-time: `wrangler d1 create
-ygb-profile-sync`, paste the `database_id` into `wrangler.jsonc`. Thereafter
-GitHub Actions runs `wrangler d1 migrations apply --remote` then
-`wrangler deploy` on every push to `main` that touches this service.
+ygb-profile-sync`, paste the `database_id` into `wrangler.jsonc`;
+`pnpm cf:r2:create` for the backups bucket. Thereafter GitHub Actions runs
+`wrangler d1 migrations apply --remote`, `wrangler deploy`, then a post-deploy
+`/v1/health` check on every push to `main` that touches this service.
 
 ## Known limitations (carried from the previous version, not regressions)
 

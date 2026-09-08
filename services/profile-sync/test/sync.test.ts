@@ -1,11 +1,15 @@
-import { env } from "cloudflare:test";
+import {
+  createExecutionContext,
+  env,
+  waitOnExecutionContext,
+} from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import type {
   SyncPullResponse,
   SyncPushResponse,
   SyncStateResponse,
 } from "@ygb/shared";
-import app from "../src/index";
+import worker, { app } from "../src/index";
 
 const PROFILE_ID = "11111111-1111-1111-1111-111111111111";
 const OTHER_ID = "22222222-2222-2222-2222-222222222222";
@@ -210,5 +214,63 @@ describe("profile-sync", () => {
     const res = await post("/api/v1/sync", samplePayload);
     expect(res.status).toBe(200);
     expect((await res.json<SyncPushResponse>()).status).toBe("ok");
+  });
+
+  describe("POST /log", () => {
+    const log = (body: unknown) =>
+      app.request(
+        "/log",
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(body),
+        },
+        env,
+      );
+
+    it("accepts a client error without auth and returns 204", async () => {
+      const res = await log({ message: "boom", stack: "at x", level: "error" });
+      expect(res.status).toBe(204);
+    });
+
+    it("returns 204 and drops a payload with no message", async () => {
+      expect((await log({ level: "warn" })).status).toBe(204);
+    });
+
+    it("is also mounted under /api", async () => {
+      const res = await app.request(
+        "/api/log",
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ message: "via api" }),
+        },
+        env,
+      );
+      expect(res.status).toBe(204);
+    });
+  });
+
+  it("scheduled() writes a nightly D1 dump to R2", async () => {
+    await post("/api/sync/push", sampleFor(PROFILE_ID), PROFILE_ID);
+
+    const ctx = createExecutionContext();
+    await worker.scheduled(
+      { scheduledTime: Date.now(), cron: "17 3 * * *", noRetry() {} },
+      env,
+      ctx,
+    );
+    await waitOnExecutionContext(ctx);
+
+    const listed = await env.BACKUPS.list({ prefix: "d1/" });
+    expect(listed.objects.length).toBeGreaterThan(0);
+
+    const body = await env.BACKUPS.get(listed.objects[0]!.key);
+    const dump = (await body!.json()) as {
+      counts: Record<string, number>;
+      tables: { courses: unknown[] };
+    };
+    expect(dump.counts.profiles).toBeGreaterThan(0);
+    expect(dump.tables.courses.length).toBe(dump.counts.courses);
   });
 });

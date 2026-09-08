@@ -6,8 +6,12 @@ All three services run on **Cloudflare** and deploy from GitHub Actions
 | Service                       | Worker name        | Extras            |
 | ----------------------------- | ------------------ | ----------------- |
 | `apps/web`                    | `ygb-web`          | `@opennextjs/cloudflare`, Workers Assets |
-| `services/profile-sync`       | `ygb-profile-sync` | D1 `ygb-profile-sync` + a rate-limiter binding (no setup) |
+| `services/profile-sync`       | `ygb-profile-sync` | D1 `ygb-profile-sync`, R2 `ygb-backups` (nightly D1 dump), Analytics Engine `ygb_client_errors` (POST `/log`), two rate-limiter bindings (no setup) |
 | `services/course-ls`          | `ygb-course-ls`    | KV `COURSE_CACHE`, `GOOGLE_MAPS_API_KEY` secret |
+
+`profile-sync` also runs a **cron trigger** (`17 3 * * *`) that dumps every D1
+table to the `ygb-backups` R2 bucket as one JSON object and prunes dumps older
+than 30 days (`src/backup.ts`).
 
 ## Local config — one file
 
@@ -34,12 +38,18 @@ Create a token at **dash.cloudflare.com → My Profile → API Tokens** with:
 - Account · Workers Scripts · Edit
 - Account · D1 · Edit
 - Account · Workers KV Storage · Edit
+- Account · Workers R2 Storage · Edit
 - Account · Account Settings · Read
 - User · User Details · Read
-- Zone · Workers Routes · Edit *(only if you attach custom domains)*
+- Zone · Workers Routes · Edit — **required.** The three Workers use
+  `custom_domain` routes (`yourbuddy.golf`, `api.`, `courses.`); wrangler lists
+  zone routes on every deploy once a custom domain exists, so a token without
+  this scope fails with `Authentication error [code: 10000]` even though the
+  script upload itself succeeds.
 
-Shortcut: the **"Edit Cloudflare Workers"** token template covers everything
-except D1 — add one row, `D1 · Edit`. Put the token and your Account ID in `.env`.
+Shortcut: the **"Edit Cloudflare Workers"** token template covers most of this —
+add rows for `D1 · Edit`, `Workers R2 Storage · Edit`, and `Zone · Workers
+Routes · Edit`. Put the token and your Account ID in `.env`.
 
 ### 2. GitHub repo secrets & variables
 
@@ -92,6 +102,17 @@ pnpm cf:kv:create
 Copy the printed `id` into `services/course-ls/wrangler.jsonc` (replace
 `REPLACE_WITH_KV_NAMESPACE_ID`) and commit.
 
+### 5b. Create the backups R2 bucket
+
+```bash
+pnpm cf:r2:create      # creates the `ygb-backups` bucket
+```
+
+No id to copy back — the binding in `services/profile-sync/wrangler.jsonc`
+references the bucket by name. Requires Workers Paid ($5/mo) for the cron
+trigger; the bucket itself is free-tier. Analytics Engine (`ygb_client_errors`,
+used by POST `/log`) needs no setup — the dataset is created on first write.
+
 ### 6. First deploy (by hand)
 
 Order matters: the web build bakes in the service URLs, so deploy the two
@@ -125,6 +146,20 @@ the URLs are stable, but use the split flow for the first deploy.
 The old Laravel SQLite database held a handful of test rows. Simpler to re-sync
 from the web client than to script an import.
 
+### Restoring from an R2 backup
+
+Nightly dumps land in `ygb-backups` under `d1/<date>/<timestamp>.json`. To
+inspect or restore one:
+
+```bash
+pnpm --filter profile-sync exec wrangler r2 object get \
+  ygb-backups/d1/2026-09-08/<timestamp>.json --file backup.json
+```
+
+The file is `{ takenAt, counts, tables: { profiles, courses, games, scores } }`.
+Restore by generating `INSERT` statements from `tables` and running
+`wrangler d1 execute ygb-profile-sync --remote --file restore.sql`.
+
 ## How the workflows behave
 
 - **`ci.yml`** — every PR and push to `main`: `pnpm turbo run typecheck lint
@@ -135,7 +170,10 @@ from the web client than to script an import.
   `dorny/paths-filter` then decides which of web / profile-sync / course-ls
   changed (a `packages/shared` or lockfile change triggers web + profile-sync).
   Each job installs, builds `@ygb/shared`, then deploys. profile-sync also runs
-  `wrangler d1 migrations apply --remote` first.
+  `wrangler d1 migrations apply --remote` first. After deploying, each job runs
+  a **post-deploy health check** — curls the live `/v1/health` (profile-sync),
+  `/health` (course-ls), or `/` (web), retrying for ~1 min, and fails the job
+  if the new deploy never comes up healthy.
 
 ## Local dev
 

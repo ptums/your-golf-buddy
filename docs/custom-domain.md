@@ -28,6 +28,15 @@ The `routes` blocks in the three `wrangler.jsonc` files are live as of the zone
 going Active — each `wrangler deploy` creates its hostname's DNS record + TLS
 cert automatically. Push to `main` (or `pnpm deploy:services` + `pnpm deploy:web`).
 
+> **The API token needs `Zone · Workers Routes · Edit`.** Once a Worker has a
+> `custom_domain` route, wrangler lists zone routes on every deploy. Without the
+> scope the deploy step ends with
+> `A request to the Cloudflare API (/zones/{zone}/workers/routes) failed.
+> Authentication error [code: 10000]` — the script *upload* still succeeds
+> (so code changes land), but the job goes red and the health check is skipped.
+> Add the scope to the token in Cloudflare and to the `CLOUDFLARE_API_TOKEN`
+> GitHub secret.
+
 ## 3. Point the web build at the new URLs
 
 **GitHub → Settings → Secrets and variables → Actions → Variables:**

@@ -8,6 +8,10 @@
     "enabled": true
   },
   "routes": [{ "pattern": "api.yourbuddy.golf", "custom_domain": true }],
+  // Nightly D1 -> R2 backup (03:17 UTC). Handler: scheduled() in src/index.ts.
+  "triggers": {
+    "crons": ["17 3 * * *"]
+  },
   "vars": {
     // Browsers allowed to call this API. Drop the *.workers.dev entry once the
     // app is fully on yourbuddy.golf.
@@ -21,13 +25,33 @@
       "migrations_dir": "migrations"
     }
   ],
-  // Coarse abuse limiter, keyed by the caller's profile token (see src/auth.ts).
-  // namespace_id is just a stable identifier you pick; no resource to provision.
+  // Backup target for the nightly D1 dump. Create with `pnpm cf:r2:create`.
+  "r2_buckets": [
+    {
+      "binding": "BACKUPS",
+      "bucket_name": "ygb-backups"
+    }
+  ],
+  // Client-error telemetry sink for POST /log (see src/index.ts).
+  "analytics_engine_datasets": [
+    {
+      "binding": "TELEMETRY",
+      "dataset": "ygb_client_errors"
+    }
+  ],
+  // Coarse abuse limiters. namespace_id is just a stable identifier you pick;
+  // no resource to provision. SYNC_LIMITER is keyed by the caller's profile
+  // token (src/auth.ts); LOG_LIMITER is keyed by client IP (POST /log).
   "ratelimits": [
     {
       "name": "SYNC_LIMITER",
       "namespace_id": "1001",
       "simple": { "limit": 120, "period": 60 }
+    },
+    {
+      "name": "LOG_LIMITER",
+      "namespace_id": "1002",
+      "simple": { "limit": 30, "period": 60 }
     }
   ]
 }
