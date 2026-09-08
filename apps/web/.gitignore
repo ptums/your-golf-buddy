@@ -15,6 +15,7 @@
 /.wrangler/
 .dev.vars
 .dev.vars.*
+cloudflare-env.d.ts
 
 # production
 /build
