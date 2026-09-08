@@ -15,8 +15,7 @@
     {
       "binding": "DB",
       "database_name": "ygb-profile-sync",
-      // Filled in by `wrangler d1 create ygb-profile-sync` (see docs/deploy.md).
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "database_id": "ee1fc1f0-e3e4-439d-a427-357b09c56d5e",
       "migrations_dir": "migrations"
     }
   ]
