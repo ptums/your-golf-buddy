@@ -34,8 +34,10 @@ function safeHost(url: string): string {
   }
 }
 
-/** Wire the web app's console + errors through to the Metro logs. */
-const DEBUG_BRIDGE = `
+/** Wire the web app's console + errors through to the Metro logs (dev only). */
+const DEBUG_BRIDGE = !__DEV__
+  ? ""
+  : `
   (function () {
     var send = function (level, args) {
       try {
