@@ -35,7 +35,11 @@ First run locally:
 ```bash
 pnpm --filter profile-sync exec wrangler d1 migrations apply ygb-profile-sync --local
 pnpm --filter profile-sync dev
-curl -XPOST localhost:8787/api/sync/push -H 'content-type: application/json' -d @../../docs/sync-sample.json
+# the profile id in sync-sample.json (11111111-…) is the bearer token:
+curl -XPOST localhost:8787/api/sync/push \
+  -H 'content-type: application/json' \
+  -H 'authorization: Bearer 11111111-1111-1111-1111-111111111111' \
+  -d @../../docs/sync-sample.json
 ```
 
 ## Data model
@@ -62,17 +66,30 @@ resolves profile ownership for games/scores through course → profile. This
 matches the previous Laravel legacy `sync()` behaviour, which is the path the
 live client actually exercises.
 
+## Auth
+
+Every `/sync/*` request must send `Authorization: Bearer <profileId>`, where
+`<profileId>` is the client's profile UUID. That UUID is a **capability token**:
+122 bits of entropy, unguessable, so knowing it is the only way to reach that
+profile's rows. Requests without a well-formed UUID get `401`; the token is also
+run through a coarse rate limiter (120 req/min, `SYNC_LIMITER` binding — no
+setup, `namespace_id` is just an identifier). See `src/auth.ts`.
+
+Every read and write is scoped to the token's profile (`src/sync/*`), so one
+token never sees another profile's data.
+
 ## API
 
-Base path `/api`. Routes in `src/index.ts`; logic in `src/sync/*`.
+Base path `/api`, also served at the root. Routes in `src/index.ts`.
 
-| Method & path          | Purpose                                                      |
-| ---------------------- | --------------------------------------------------------- |
-| `GET  /api/v1/health`    | `{ "ok": true }`                                           |
-| `POST /api/sync/state`   | Compare client cursors to server. `{ inSync }`, or `{ inSync:false, serverCursors, counts }`. |
-| `POST /api/sync/push`    | Idempotent upsert of `profiles`/`courses`/`games`/`scores`. Returns `{ status:"ok", saved, serverCursors }`. |
-| `POST /api/v1/sync`      | Legacy alias for `/api/sync/push`.                          |
-| `POST /api/sync/pull`    | Rows changed since the client's cursors (`limit` 1–1000, default 100). Returns `{ changes, serverCursors }`. |
+| Method & path        | Purpose                                                      |
+| -------------------- | --------------------------------------------------------- |
+| `GET  /api/v1/health`  | `{ "ok": true }` — no auth                                 |
+| `POST /api/sync/state` | Compare client cursors to server. `{ inSync }`, or `{ inSync:false, serverCursors, counts }` — all per-profile. |
+| `POST /api/sync/push`  | Idempotent upsert of the caller's `profiles`/`courses`/`games`/`scores`. `{ status:"ok", saved, serverCursors }`. |
+| `POST /api/v1/sync`    | Legacy alias for `/api/sync/push`.                          |
+| `POST /api/sync/pull`  | Rows changed since the client's cursors (`limit` 1–1000, default 100). `{ changes, serverCursors }`. Games carry `course_external_id`, scores carry `game_external_id`. |
+| `POST /api/sync/delete`| Hard-delete every server row for the caller's profile. `{ status:"ok", deleted }`. |
 
 **Cursors**: `max(updated_at, deleted_at)` per table, ISO-8601. `pull` returns
 rows where `updated_at > cursor` OR `deleted_at > cursor`, ordered by `updated_at`.
@@ -80,8 +97,8 @@ rows where `updated_at > cursor` OR `deleted_at > cursor`, ordered by `updated_a
 **Conflict resolution**: last-write-wins on `updated_at`; an upsert clears
 `deleted_at`.
 
-**Auth**: none (single-user assumption). Do not expose publicly as-is. CORS
-origins are set by the `CORS_ORIGINS` var in `wrangler.jsonc` (`*` by default).
+**CORS**: origins from the `CORS_ORIGINS` var in `wrangler.jsonc` (`*` by
+default — tighten to the web origin for production).
 
 ## Deploy
 

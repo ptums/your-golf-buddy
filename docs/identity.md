@@ -26,14 +26,23 @@ lives in a second IndexedDB database, `ScoreCardNotes` (`apps/web/lib/db.ts`).
 
 ## How sync uses it
 
-When cloud sync is enabled, the profile (including its client-generated UUID) is
-pushed to [`services/profile-sync`](../services/profile-sync), which keys every
-row by `profile_id`. The service is single-user and unauthenticated — it trusts
-the client's profile id. See its README for the security caveats.
+When cloud sync is enabled, the client sends its profile UUID as
+`Authorization: Bearer <profileId>` on every request to
+[`services/profile-sync`](../services/profile-sync). The service treats that
+UUID as a **capability token** — 122 bits of entropy, so knowing it is the only
+way to touch that profile's rows — validates it, rate-limits per token, and
+scopes every read and write to it. No accounts, no passwords.
 
-## If real auth is ever needed
+The trade-offs of the capability model:
 
-Add it at the edge in front of `services/profile-sync` (a bearer token check in
-the Hono app, or Cloudflare Access) and carry a real user id instead of the
-anonymous profile UUID. The sync schema already scopes everything by
-`profile_id`, so the data model would not need to change.
+- If the UUID leaks (a shared device, a screenshot, logs), that data is exposed.
+- There's no recovery: lose the UUID and the server data is unreachable. The web
+  app should let the user view and re-enter their profile key.
+- `POST /sync/delete` hard-removes all server rows for the token.
+
+## If real accounts are ever needed
+
+Put an identity provider (passkeys, email magic links, Cloudflare Access) in
+front, map the authenticated user to a stable id, and use that as `profile_id`.
+The schema already scopes everything by `profile_id`, so the data model doesn't
+change.

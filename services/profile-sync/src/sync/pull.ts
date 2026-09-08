@@ -15,20 +15,21 @@ import { allCursors } from "./cursors.js";
 
 /**
  * Return every row changed (updated or tombstoned) since the client's cursor,
- * ordered by `updated_at`, capped at `limit`. Ported from Laravel
- * `SyncController::pullChanges()` / `getChangesSince()`.
+ * scoped to `profileId`, ordered by `updated_at`, capped at `limit`. Ported
+ * from Laravel `SyncController::pullChanges()` / `getChangesSince()`.
  */
 export async function pullChanges(
   db: Db,
+  profileId: string,
   req: SyncPullRequest,
 ): Promise<SyncPullResponse> {
   const { cursors, limit } = req;
 
   const [profileRows, courseRows, gameRows, scoreRows] = await Promise.all([
-    changedProfiles(db, cursors.profiles ?? null, limit),
-    changedCourses(db, cursors.courses ?? null, limit),
-    changedGames(db, cursors.games ?? null, limit),
-    changedScores(db, cursors.scores ?? null, limit),
+    changedProfiles(db, profileId, cursors.profiles ?? null, limit),
+    changedCourses(db, profileId, cursors.courses ?? null, limit),
+    changedGames(db, profileId, cursors.games ?? null, limit),
+    changedScores(db, profileId, cursors.scores ?? null, limit),
   ]);
 
   const changes: ServerChanges = {
@@ -38,7 +39,7 @@ export async function pullChanges(
     scores: scoreRows,
   };
 
-  return { changes, serverCursors: await allCursors(db) };
+  return { changes, serverCursors: await allCursors(db, profileId) };
 }
 
 function sinceCondition(
@@ -55,13 +56,19 @@ function sinceCondition(
 
 async function changedProfiles(
   db: Db,
+  profileId: string,
   cursor: string | null,
   limit: number,
 ): Promise<ServerProfile[]> {
   const rows = await db
     .select()
     .from(profiles)
-    .where(sinceCondition(profiles.updatedAt, profiles.deletedAt, cursor))
+    .where(
+      and(
+        eq(profiles.id, profileId),
+        sinceCondition(profiles.updatedAt, profiles.deletedAt, cursor),
+      ),
+    )
     .orderBy(asc(profiles.updatedAt))
     .limit(limit);
   return rows.map((r) => ({
@@ -76,13 +83,19 @@ async function changedProfiles(
 
 async function changedCourses(
   db: Db,
+  profileId: string,
   cursor: string | null,
   limit: number,
 ): Promise<ServerCourse[]> {
   const rows = await db
     .select()
     .from(courses)
-    .where(sinceCondition(courses.updatedAt, courses.deletedAt, cursor))
+    .where(
+      and(
+        eq(courses.profileId, profileId),
+        sinceCondition(courses.updatedAt, courses.deletedAt, cursor),
+      ),
+    )
     .orderBy(asc(courses.updatedAt))
     .limit(limit);
   return rows.map((r) => ({
@@ -99,6 +112,7 @@ async function changedCourses(
 
 async function changedGames(
   db: Db,
+  profileId: string,
   cursor: string | null,
   limit: number,
 ): Promise<ServerGame[]> {
@@ -109,7 +123,12 @@ async function changedGames(
     })
     .from(games)
     .leftJoin(courses, eq(games.courseId, courses.id))
-    .where(sinceCondition(games.updatedAt, games.deletedAt, cursor))
+    .where(
+      and(
+        eq(games.profileId, profileId),
+        sinceCondition(games.updatedAt, games.deletedAt, cursor),
+      ),
+    )
     .orderBy(asc(games.updatedAt))
     .limit(limit);
   return rows.map(({ game: r, courseExternalId }) => ({
@@ -129,6 +148,7 @@ async function changedGames(
 
 async function changedScores(
   db: Db,
+  profileId: string,
   cursor: string | null,
   limit: number,
 ): Promise<ServerScore[]> {
@@ -139,7 +159,12 @@ async function changedScores(
     })
     .from(scores)
     .leftJoin(games, eq(scores.gameId, games.id))
-    .where(sinceCondition(scores.updatedAt, scores.deletedAt, cursor))
+    .where(
+      and(
+        eq(scores.profileId, profileId),
+        sinceCondition(scores.updatedAt, scores.deletedAt, cursor),
+      ),
+    )
     .orderBy(asc(scores.updatedAt))
     .limit(limit);
   return rows.map(({ score: r, gameExternalId }) => ({

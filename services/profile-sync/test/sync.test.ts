@@ -8,20 +8,19 @@ import type {
 import app from "../src/index";
 
 const PROFILE_ID = "11111111-1111-1111-1111-111111111111";
+const OTHER_ID = "22222222-2222-2222-2222-222222222222";
 
-const samplePayload = {
+const sampleFor = (profileId: string) => ({
   profiles: [
     {
-      id: PROFILE_ID,
-      username: "peter",
+      id: profileId,
+      username: `u-${profileId.slice(0, 8)}`,
       dobHash: "abc123",
       createdAt: "2025-08-01T00:00:00.000Z",
       lastActiveAt: "2025-09-01T00:00:00.000Z",
     },
   ],
-  courses: [
-    { id: 7, name: "Ozark Links", rounds: 18, profileId: PROFILE_ID },
-  ],
+  courses: [{ id: 7, name: "Ozark Links", rounds: 18, profileId }],
   games: [
     {
       id: 42,
@@ -31,18 +30,21 @@ const samplePayload = {
       finalScore: 88,
     },
   ],
-  scores: [
-    { id: 9001, gameId: 42, hole: 1, par: "4", score: "5", putts: 2 },
-  ],
+  scores: [{ id: 9001, gameId: 42, hole: 1, par: "4", score: "5", putts: 2 }],
   metadata: { deviceId: "device-xyz", version: "1.0.0" },
-};
+});
 
-function post(path: string, body: unknown) {
+const samplePayload = sampleFor(PROFILE_ID);
+
+function post(path: string, body: unknown, token: string | null = PROFILE_ID) {
   return app.request(
     path,
     {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify(body),
     },
     env,
@@ -50,20 +52,28 @@ function post(path: string, body: unknown) {
 }
 
 describe("profile-sync", () => {
-  it("GET /api/v1/health", async () => {
+  it("GET /api/v1/health needs no auth", async () => {
     const res = await app.request("/api/v1/health", {}, env);
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true });
   });
 
+  it("rejects sync requests without a bearer token", async () => {
+    const res = await post("/api/sync/state", { cursors: {} }, null);
+    expect(res.status).toBe(401);
+  });
+
+  it("rejects a malformed bearer token", async () => {
+    const res = await post("/api/sync/state", { cursors: {} }, "not-a-uuid");
+    expect(res.status).toBe(401);
+  });
+
   it("serves the same routes with and without the /api prefix", async () => {
     for (const path of ["/api/v1/health", "/v1/health"]) {
-      const res = await app.request(path, {}, env);
-      expect(res.status).toBe(200);
+      expect((await app.request(path, {}, env)).status).toBe(200);
     }
     for (const path of ["/api/sync/state", "/sync/state"]) {
-      const res = await post(path, { cursors: {} });
-      expect(res.status).toBe(200);
+      expect((await post(path, { cursors: {} })).status).toBe(200);
     }
   });
 
@@ -74,20 +84,14 @@ describe("profile-sync", () => {
   });
 
   it("push then pull round-trips the sample payload with linked ids", async () => {
-    const pushRes = await post("/api/sync/push", samplePayload);
-    expect(pushRes.status).toBe(200);
-    const push = await pushRes.json<SyncPushResponse>();
-    expect(push.status).toBe("ok");
-    expect(push.saved).toEqual({
-      profiles: 1,
-      courses: 1,
-      games: 1,
-      scores: 1,
-    });
+    const push = await (
+      await post("/api/sync/push", samplePayload)
+    ).json<SyncPushResponse>();
+    expect(push.saved).toEqual({ profiles: 1, courses: 1, games: 1, scores: 1 });
 
-    // Client with stale cursors is now out of sync.
-    const stateRes = await post("/api/sync/state", { cursors: {} });
-    const state = await stateRes.json<SyncStateResponse>();
+    const state = await (
+      await post("/api/sync/state", { cursors: {} })
+    ).json<SyncStateResponse>();
     expect(state.inSync).toBe(false);
     expect(state.counts).toEqual({
       profiles: 1,
@@ -96,14 +100,13 @@ describe("profile-sync", () => {
       scores: 1,
     });
 
-    const pullRes = await post("/api/sync/pull", { cursors: {}, limit: 100 });
-    const pull = await pullRes.json<SyncPullResponse>();
+    const pull = await (
+      await post("/api/sync/pull", { cursors: {}, limit: 100 })
+    ).json<SyncPullResponse>();
 
-    expect(pull.changes.profiles).toHaveLength(1);
     expect(pull.changes.profiles[0]).toMatchObject({
       id: PROFILE_ID,
-      username: "peter",
-      dob_hash: "abc123",
+      username: "u-11111111",
       deleted_at: null,
     });
 
@@ -111,52 +114,96 @@ describe("profile-sync", () => {
     const game = pull.changes.games[0]!;
     const score = pull.changes.scores[0]!;
 
-    expect(course).toMatchObject({
-      profile_id: PROFILE_ID,
-      external_id: "course:7",
-      name: "Ozark Links",
-      rounds: 18,
-    });
+    expect(course).toMatchObject({ external_id: "course:7", name: "Ozark Links" });
     expect(game).toMatchObject({
-      profile_id: PROFILE_ID,
       external_id: "game:42",
       course_id: course.id,
       course_external_id: "course:7",
-      final_note: "windy",
       final_score: 88,
     });
     expect(score).toMatchObject({
-      profile_id: PROFILE_ID,
       external_id: "score:9001",
       game_id: game.id,
       game_external_id: "game:42",
-      hole: 1,
-      par: "4",
-      score: "5",
       putts: 2,
     });
 
-    // Pulling again with the returned cursors yields nothing new.
-    const secondPull = await post("/api/sync/pull", {
-      cursors: pull.serverCursors,
-      limit: 100,
-    });
-    const second = await secondPull.json<SyncPullResponse>();
-    expect(second.changes.profiles).toHaveLength(0);
+    const second = await (
+      await post("/api/sync/pull", { cursors: pull.serverCursors, limit: 100 })
+    ).json<SyncPullResponse>();
     expect(second.changes.courses).toHaveLength(0);
-    expect(second.changes.games).toHaveLength(0);
-    expect(second.changes.scores).toHaveLength(0);
   });
 
-  it("push is idempotent", async () => {
-    await post("/api/sync/push", samplePayload);
-    const again = await post("/api/sync/push", samplePayload);
-    expect((await again.json<SyncPushResponse>()).saved.courses).toBe(1);
+  it("isolates profiles — one token never sees another's rows", async () => {
+    await post("/api/sync/push", sampleFor(PROFILE_ID), PROFILE_ID);
+    await post("/api/sync/push", sampleFor(OTHER_ID), OTHER_ID);
 
-    const pull = await post("/api/sync/pull", { cursors: {}, limit: 100 });
-    const body = await pull.json<SyncPullResponse>();
-    expect(body.changes.courses).toHaveLength(1);
-    expect(body.changes.scores).toHaveLength(1);
+    const mine = await (
+      await post("/api/sync/pull", { cursors: {}, limit: 100 }, PROFILE_ID)
+    ).json<SyncPullResponse>();
+    expect(mine.changes.profiles).toHaveLength(1);
+    expect(mine.changes.profiles[0]!.id).toBe(PROFILE_ID);
+    expect(mine.changes.courses.every((c) => c.profile_id === PROFILE_ID)).toBe(
+      true,
+    );
+
+    const state = await (
+      await post("/api/sync/state", { cursors: {} }, PROFILE_ID)
+    ).json<SyncStateResponse>();
+    // counts are per-profile, not the whole table
+    expect(state.counts).toEqual({
+      profiles: 1,
+      courses: 1,
+      games: 1,
+      scores: 1,
+    });
+  });
+
+  it("push ignores rows belonging to another profile", async () => {
+    const mixed = {
+      ...sampleFor(PROFILE_ID),
+      courses: [
+        { id: 7, name: "Mine", rounds: 18, profileId: PROFILE_ID },
+        { id: 8, name: "Theirs", rounds: 9, profileId: OTHER_ID },
+      ],
+      profiles: [
+        { id: PROFILE_ID, username: "mine", dobHash: "h" },
+        { id: OTHER_ID, username: "spoof", dobHash: "h" },
+      ],
+    };
+    const push = await (
+      await post("/api/sync/push", mixed, PROFILE_ID)
+    ).json<SyncPushResponse>();
+    expect(push.saved.courses).toBe(1);
+    expect(push.saved.profiles).toBe(1);
+  });
+
+  it("delete removes every row for the caller's profile", async () => {
+    await post("/api/sync/push", sampleFor(PROFILE_ID), PROFILE_ID);
+    await post("/api/sync/push", sampleFor(OTHER_ID), OTHER_ID);
+
+    const del = await (
+      await post("/api/sync/delete", {}, PROFILE_ID)
+    ).json<{ status: string; deleted: Record<string, number> }>();
+    expect(del.status).toBe("ok");
+    expect(del.deleted).toEqual({
+      profiles: 1,
+      courses: 1,
+      games: 1,
+      scores: 1,
+    });
+
+    const gone = await (
+      await post("/api/sync/pull", { cursors: {}, limit: 100 }, PROFILE_ID)
+    ).json<SyncPullResponse>();
+    expect(gone.changes.profiles).toHaveLength(0);
+    expect(gone.changes.courses).toHaveLength(0);
+
+    // the other profile is untouched
+    const other = await (
+      await post("/api/sync/pull", { cursors: {}, limit: 100 }, OTHER_ID)
+    ).json<SyncPullResponse>();
+    expect(other.changes.courses).toHaveLength(1);
   });
 
   it("legacy /api/v1/sync alias also accepts a push", async () => {

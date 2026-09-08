@@ -3,16 +3,17 @@ import type { Db } from "../db/client.js";
 import { allCursors, countAll } from "./cursors.js";
 
 /**
- * Compare the client's per-table cursors against the server's. If every cursor
- * matches, the client is in sync; otherwise return the server cursors plus row
- * counts so the client knows there is work to do. Ported from Laravel
+ * Compare the client's per-table cursors against the server's, scoped to one
+ * profile. If every cursor matches, the client is in sync; otherwise return the
+ * server cursors plus row counts. Ported from Laravel
  * `SyncController::checkSyncState()`.
  */
 export async function checkSyncState(
   db: Db,
+  profileId: string,
   clientCursors: SyncCursors,
 ): Promise<SyncStateResponse> {
-  const serverCursors = await allCursors(db);
+  const serverCursors = await allCursors(db, profileId);
 
   const inSync = SYNC_TABLES.every(
     (t) => (clientCursors[t] ?? null) === (serverCursors[t] ?? null),
@@ -23,6 +24,6 @@ export async function checkSyncState(
   return {
     inSync: false,
     serverCursors,
-    counts: await countAll(db),
+    counts: await countAll(db, profileId),
   };
 }

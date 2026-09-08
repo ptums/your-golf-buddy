@@ -64,6 +64,29 @@ export default function SyncSettings() {
     }
   };
 
+  const handleDeleteSynced = async () => {
+    if (!cloudSync) return;
+    if (
+      !window.confirm(
+        "Delete your synced data from the cloud? Your rounds on this device stay put. If sync is on elsewhere, that device will re-upload them."
+      )
+    ) {
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const ok = await cloudSync.deleteSyncedData();
+      setSyncStatus(cloudSync.getSyncStatus());
+      window.alert(
+        ok
+          ? "Your cloud data was deleted and sync is now off."
+          : "Couldn't delete cloud data — try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!syncStatus) return null;
 
   const formatDate = (dateString: string | null) => {
@@ -182,15 +205,29 @@ export default function SyncSettings() {
           </div>
         )}
 
+        {/* Danger zone */}
+        <div className="border-t border-slate-200 pt-4">
+          <button
+            onClick={handleDeleteSynced}
+            disabled={isLoading}
+            className="w-full text-sm text-red-600 border border-red-200 py-2 px-4 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors"
+          >
+            Delete my cloud data
+          </button>
+          <p className="text-xs text-slate-400 mt-1">
+            Removes your rounds from the server. Data on this device is kept.
+          </p>
+        </div>
+
         {/* Privacy Notice */}
         <div className="text-xs text-slate-500 bg-slate-50 p-3 rounded-lg">
           <p className="font-medium mb-1">Privacy Notice:</p>
           <p>
-            When enabled, your golf data (scores, courses, practice notes) will
-            be synced to our secure cloud servers. This allows you to access
-            your data across devices and provides backup protection. Your data
-            is encrypted in transit and at rest. You can disable sync at any
-            time.
+            When enabled, your golf data (courses, rounds, scores) is synced to
+            the cloud so you can use it on another device. It&apos;s protected by
+            your profile key — an unguessable id kept on your device — not a
+            login, so keep that device safe. Turn sync off or delete your cloud
+            data any time.
           </p>
         </div>
       </div>

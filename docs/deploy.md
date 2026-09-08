@@ -6,7 +6,7 @@ All three services run on **Cloudflare** and deploy from GitHub Actions
 | Service                       | Worker name        | Extras            |
 | ----------------------------- | ------------------ | ----------------- |
 | `apps/web`                    | `ygb-web`          | `@opennextjs/cloudflare`, Workers Assets |
-| `services/profile-sync`       | `ygb-profile-sync` | D1 database `ygb-profile-sync` |
+| `services/profile-sync`       | `ygb-profile-sync` | D1 `ygb-profile-sync` + a rate-limiter binding (no setup) |
 | `services/course-ls`          | `ygb-course-ls`    | KV `COURSE_CACHE`, `GOOGLE_MAPS_API_KEY` secret |
 
 ## Local config — one file

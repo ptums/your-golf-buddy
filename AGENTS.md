@@ -43,6 +43,10 @@ Node 22, pnpm 10. `apps/mobile` uses its own `npm install` (not the workspace).
 - **Wire format is snake_case** for rows the server returns (`profile_id`,
   `dob_hash`, …). The client posts camelCase raw IndexedDB rows. `profile-sync`
   bridges the two; keep it that way unless deliberately migrating the contract.
+- **profile-sync auth**: every `/sync/*` call carries `Authorization: Bearer
+  <profileId>` (the UUID *is* the credential — capability model). `src/auth.ts`
+  validates + rate-limits; every query in `src/sync/*` is scoped to
+  `c.get("profileId")`. Never add an unscoped query.
 - Workers config is `wrangler.jsonc` (not `.toml`). `worker-configuration.d.ts`
   is generated but **committed** — regenerate with `cf-typegen`, never hand-edit.
   Do NOT add `wrangler types` back into the `typecheck`/`build` scripts (parallel

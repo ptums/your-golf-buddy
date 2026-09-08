@@ -161,15 +161,31 @@ class CloudSyncService {
     }
   }
 
+  /**
+   * The profile's UUID doubles as the auth token — the server scopes every
+   * request to it. Read from localStorage (set at profile creation).
+   */
+  private getProfileId(): string | null {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("golf_buddy_profile_id");
+  }
+
+  private authHeaders(): Record<string, string> {
+    const profileId = this.getProfileId();
+    if (!profileId) throw new Error("No profile — cannot sync");
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${profileId}`,
+    };
+  }
+
   private async pushChanges(): Promise<boolean> {
     try {
       const syncData = await this.collectSyncData();
 
       const response = await fetch(`${this.SYNC_BASE_URL}/sync/push`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: this.authHeaders(),
         body: JSON.stringify(syncData),
       });
 
@@ -198,9 +214,7 @@ class CloudSyncService {
 
       const response = await fetch(`${this.SYNC_BASE_URL}/sync/pull`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: this.authHeaders(),
         body: JSON.stringify({ cursors, limit: 100 }),
       });
 
@@ -348,6 +362,31 @@ class CloudSyncService {
 
   async forceSync(): Promise<boolean> {
     return this.performSync();
+  }
+
+  /**
+   * Ask the server to delete every row for this profile, then stop syncing and
+   * forget the local sync cursors. Local rounds on this device are kept — the
+   * caller decides whether to clear those too.
+   */
+  async deleteSyncedData(): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.SYNC_BASE_URL}/sync/delete`, {
+        method: "POST",
+        headers: this.authHeaders(),
+        body: "{}",
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      await this.disableSync();
+      localStorage.removeItem(this.CURSORS_KEY);
+      localStorage.removeItem("golf_buddy_last_sync");
+      return true;
+    } catch (error) {
+      console.error("Failed to delete synced data:", error);
+      return false;
+    }
   }
 
   getSyncStatus(): SyncStatus {

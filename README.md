@@ -53,8 +53,10 @@ Each app has its own README with detail. AI agents: see [`AGENTS.md`](./AGENTS.m
   and works fully offline. Cloud sync is opt-in (Settings) and does cursor-based
   push/pull against **profile-sync**. Identity is a local anonymous profile —
   no accounts, no third-party auth (see [`docs/identity.md`](./docs/identity.md)).
-- **profile-sync** is single-user and unauthenticated. UUID ids, ISO-8601
-  timestamps, soft deletes, `max(updated_at, deleted_at)` cursors per table.
+- **profile-sync** authenticates each request with the profile's UUID as a
+  bearer token (a capability, not a login) and scopes every read/write to it,
+  with a coarse rate limiter. UUID ids, ISO-8601 timestamps, soft deletes,
+  `max(updated_at, deleted_at)` cursors per table, and a `/sync/delete` endpoint.
 - **course-ls** backs the new-round course typeahead: it wraps Google Places
   Text Search and serves repeat queries from a Cache API → Workers KV → Google
   chain so keystrokes stay fast and cheap.
