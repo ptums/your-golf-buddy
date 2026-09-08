@@ -1,37 +1,22 @@
 # Your Golf Buddy — Course Location Service (Course LS)
 
-A small Hono API on Cloudflare Workers that returns nearby golf courses for a
-GPS location, with location-bucketed caching so responses are fast and payloads
-tiny. Intended as the "connect, deliver, disconnect" data source for the offline
-clients.
+A thin Cloudflare Worker that wraps the **Google Places API (New)** to power the
+golf-course typeahead in the web app. The client debounces keystrokes and calls
+`/courses/search`; this service does the Google lookup once and then serves
+everyone else from cache.
 
-**Status:** 🟡 Prototype. The HTTP layer, cache, and distance math work, but
-`CourseService.fetchFromExternalAPI()` returns **mock data** — no real
-course-data provider is wired up. Not integrated with any client yet.
-
-> Ported from Express to Hono/Workers during the monorepo migration. The
-> `CourseService` / `CacheService` classes are unchanged; only the HTTP entry
-> point and packaging changed.
+**Status:** ✅ Functional (needs a Google Places API key configured).
 
 ## Stack
 
-| Concern | Choice                                  |
-| ------- | ------------------------------------- |
-| Runtime | Cloudflare Workers                    |
-| Router  | Hono 4                               |
-| Cache   | In-memory `Map` with per-entry TTL (`CacheService`) |
-
-## Develop
-
-```bash
-pnpm --filter course-ls dev        # wrangler dev on http://localhost:8787
-pnpm --filter course-ls typecheck
-```
-
-```bash
-curl "http://localhost:8787/health"
-curl "http://localhost:8787/courses?lat=40.7128&lng=-74.0060&radius=15&limit=5"
-```
+| Concern      | Choice                                            |
+| ------------ | ------------------------------------------------ |
+| Runtime      | Cloudflare Workers                               |
+| Router       | Hono 4                                           |
+| Upstream     | Google Places API (New) — Text Search            |
+| Cache        | Cloudflare Cache API (per-colo) + Workers KV (global) |
+| Contract     | `CourseSearchResponse` from `@ygb/shared`        |
+| Tests        | Vitest + `@cloudflare/vitest-pool-workers` (Google mocked) |
 
 ## API
 
@@ -41,28 +26,80 @@ curl "http://localhost:8787/courses?lat=40.7128&lng=-74.0060&radius=15&limit=5"
 { "status": "healthy", "timestamp": "...", "service": "course-location-service" }
 ```
 
-### `GET /courses`
+### `GET /courses/search`
 
-| Query param | Required | Default | Notes                |
-| ----------- | -------- | ------- | ------------------- |
-| `lat`       | yes      | —       | -90..90             |
-| `lng`       | yes      | —       | -180..180           |
-| `radius`    | no       | `10`    | miles               |
-| `limit`     | no       | `20`    | max courses         |
+| Query    | Required | Notes                                                     |
+| -------- | -------- | ------------------------------------------------------- |
+| `q`      | yes      | partial course name, ≥ 2 chars (trimmed, case-insensitive) |
+| `lat`    | no       | user latitude — adds a location bias and distance ranking |
+| `lng`    | no       | user longitude                                           |
+| `radius` | no       | metres, default 40 000, snapped to 10 / 25 / 50 km buckets |
 
-Returns `{ courses: CourseSummary[], cached: boolean, timestamp: number }`,
-nearest-first (Haversine distance).
+```jsonc
+// GET /courses/search?q=pebb&lat=36.57&lng=-121.95
+{
+  "query": "pebb",
+  "results": [
+    {
+      "placeId": "ChIJ…",
+      "name": "Pebble Beach Golf Links",
+      "address": "1700 17-Mile Dr, Pebble Beach, CA 93953",
+      "location": { "lat": 36.5686, "lng": -121.9497 },
+      "distanceKm": 0.4
+    }
+  ],
+  "cached": true,
+  "source": "edge"   // "edge" | "kv" | "google"
+}
+```
+
+Errors: `400` (bad params), `502` (Google failed), `503`
+(`GOOGLE_MAPS_API_KEY` not set).
+
+## How the caching works
+
+```
+request ─▶ normalise q + bucket lat/lng (~1 km grid) + bucket radius  ──▶ cache key
+        ─▶ Cache API (caches.default, per-colo, ~0 ms)   hit? └▶ return; if stale, refresh in background (waitUntil)
+        ─▶ Workers KV (global, ~ms)                       hit? └▶ return + warm the edge
+        ─▶ Google Places Text Search (New)                     └▶ map, write KV + edge, return
+```
+
+- **Field masking** (`places.id,displayName,formattedAddress,location,types`)
+  keeps the Google request in the cheaper SKU and the payload small.
+- **Normalisation** — `"  Pebble  Beach "` and `"pebble beach"` collapse to one
+  key; nearby users share an entry because coordinates are rounded to a grid.
+- **Stale-while-revalidate** — a cache hit always returns immediately; if the
+  entry is older than 15 min the Worker refreshes it in the background.
+- **Response headers** — `Cache-Control: public, max-age=120, s-maxage=600,
+  stale-while-revalidate=86400` so the browser and any CDN also cache.
+- TTLs: edge 1 h, KV 7 days (golf courses barely change).
+
+Not done: in-flight request coalescing (a burst of identical misses in one colo
+each call Google once). The client debounce + edge cache cover the realistic
+case; a Durable Object could dedupe if it ever matters.
+
+## Develop
+
+```bash
+cp .dev.vars.example .dev.vars   # add a Google Places API key
+pnpm --filter course-ls dev      # wrangler dev on :8787
+pnpm --filter course-ls test
+```
+
+```bash
+curl "http://localhost:8787/courses/search?q=pebble%20beach&lat=36.57&lng=-121.95"
+```
+
+Without a key the service still runs — `/courses/search` returns `503` and the
+web form falls back to free-text entry.
 
 ## Deploy
 
-`wrangler deploy` (run by GitHub Actions on push to `main` touching this
-service). See [`docs/deploy.md`](../../docs/deploy.md).
+Needs two things set up once (see [`docs/deploy.md`](../../docs/deploy.md)):
 
-## To make this production-ready
+1. `wrangler kv namespace create COURSE_CACHE` → paste the id into `wrangler.jsonc`
+2. `wrangler secret put GOOGLE_MAPS_API_KEY`
 
-1. Replace `CourseService.fetchFromExternalAPI()` with a real provider (env
-   binding for the API key/URL, native `fetch`).
-2. **Caching:** Workers isolates are ephemeral, so the current in-memory `Map`
-   cache does not persist between requests. Move it to Workers KV or the Cache
-   API keyed by the rounded lat/lng bucket.
-3. Add rate limiting and structured logging if the endpoint is public.
+Then GitHub Actions runs `wrangler deploy` on every push to `main` touching this
+service.

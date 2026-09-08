@@ -3,19 +3,23 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Course Location Service — nearby golf-course lookup with location-bucketed caching (prototype, mock data).",
+  "description": "Course Location Service — golf-course typeahead search wrapping the Google Places API, with a two-tier edge cache.",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "build": "wrangler types && tsc --noEmit && wrangler deploy --dry-run --outdir=dist",
     "typecheck": "wrangler types && tsc --noEmit",
+    "test": "vitest run",
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
+    "@ygb/shared": "workspace:*",
     "hono": "^4.13.7"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.22.0",
     "typescript": "^5.9.2",
+    "vitest": "~4.1.11",
     "wrangler": "^4.129.1"
   }
 }

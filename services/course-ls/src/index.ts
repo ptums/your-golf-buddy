@@ -1,17 +1,13 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { cors } from "hono/cors";
-import { CacheService } from "./services/CacheService";
-import { CourseService } from "./services/CourseService";
+import type { CourseSearchResponse, CourseSearchResult } from "@ygb/shared";
+import { readCache, writeCache } from "./cache";
+import { GoogleApiError, searchGolfCourses } from "./google";
+import { cacheKey, parseSearchParams, type SearchParams } from "./normalize";
 
 const app = new Hono<{ Bindings: Env }>();
 
 app.use("*", cors());
-
-// Services hold only in-memory state; on Workers that state is per-isolate and
-// short-lived. Fine for the mock prototype — a real deployment needs Workers KV
-// or the Cache API (see README).
-const cacheService = new CacheService();
-const courseService = new CourseService(cacheService);
 
 app.get("/health", (c) =>
   c.json({
@@ -21,37 +17,67 @@ app.get("/health", (c) =>
   }),
 );
 
-app.get("/courses", async (c) => {
-  const { lat, lng, radius, limit } = c.req.query();
-
-  if (!lat || !lng) {
-    return c.json({ error: "Missing required parameters: lat and lng" }, 400);
+/**
+ * Golf-course typeahead. The web client debounces keystrokes and calls this
+ * with the partial query plus (optionally) the user's location.
+ *
+ *   GET /courses/search?q=pebb&lat=36.57&lng=-121.95&radius=40000
+ *
+ * Latency path: Cache API → KV → Google. Cache hits return immediately and,
+ * if the entry is going stale, kick off a background refresh (SWR).
+ */
+app.get("/courses/search", async (c) => {
+  const parsed = parseSearchParams(new URL(c.req.url));
+  if ("error" in parsed) {
+    return c.json({ error: parsed.error }, 400);
   }
 
-  const latitude = Number.parseFloat(lat);
-  const longitude = Number.parseFloat(lng);
-  const searchRadius = radius ? Number.parseInt(radius, 10) : 10;
-  const resultLimit = limit ? Number.parseInt(limit, 10) : 20;
+  const key = cacheKey(parsed);
+  const kv = c.env.COURSE_CACHE;
+  const apiKey = c.env.GOOGLE_MAPS_API_KEY;
 
-  if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
-    return c.json({ error: "Invalid coordinates provided" }, 400);
-  }
-  if (
-    latitude < -90 ||
-    latitude > 90 ||
-    longitude < -180 ||
-    longitude > 180
-  ) {
-    return c.json({ error: "Coordinates out of valid range" }, 400);
+  const hit = await readCache(key, kv);
+  if (hit) {
+    if (hit.stale && apiKey) {
+      c.executionCtx.waitUntil(revalidate(apiKey, parsed, key, kv));
+    } else if (hit.source === "kv") {
+      c.executionCtx.waitUntil(
+        writeCache(key, hit.results, kv, { edgeOnly: true }),
+      );
+    }
+    return respond(c, {
+      query: parsed.query,
+      results: hit.results,
+      cached: true,
+      source: hit.source,
+    });
   }
 
-  const result = await courseService.getCourses({
-    lat: latitude,
-    lng: longitude,
-    radius: searchRadius,
-    limit: resultLimit,
+  if (!apiKey) {
+    return c.json(
+      { error: "search unavailable: GOOGLE_MAPS_API_KEY is not configured" },
+      503,
+    );
+  }
+
+  let results: CourseSearchResult[];
+  try {
+    results = await searchGolfCourses(apiKey, parsed);
+  } catch (err) {
+    if (err instanceof GoogleApiError) {
+      console.error("google places", err.status, err.message);
+      return c.json({ error: "upstream search failed" }, 502);
+    }
+    throw err;
+  }
+
+  c.executionCtx.waitUntil(writeCache(key, results, kv));
+  return respond(c, {
+    query: parsed.query,
+    results,
+    cached: false,
+    source: "google",
   });
-  return c.json(result);
 });
 
 app.onError((err, c) => {
@@ -64,5 +90,28 @@ app.onError((err, c) => {
     500,
   );
 });
+
+function respond(c: Context<{ Bindings: Env }>, body: CourseSearchResponse) {
+  // Browser + any CDN in front: short private-ish freshness, long SWR window.
+  c.header(
+    "Cache-Control",
+    "public, max-age=120, s-maxage=600, stale-while-revalidate=86400",
+  );
+  return c.json(body);
+}
+
+async function revalidate(
+  apiKey: string,
+  params: SearchParams,
+  key: string,
+  kv: KVNamespace | undefined,
+): Promise<void> {
+  try {
+    const results = await searchGolfCourses(apiKey, params);
+    await writeCache(key, results, kv);
+  } catch (err) {
+    console.error("course-ls background revalidate failed:", err);
+  }
+}
 
 export default app;
