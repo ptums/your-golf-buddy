@@ -4,7 +4,8 @@ An offline-first golf companion: track rounds hole-by-hole, keep notes, review
 club setup and practice drills, and sync your data across devices.
 
 A **pnpm + Turborepo monorepo**. Everything is TypeScript; the two backend
-services and the web app all deploy to **Cloudflare** from GitHub Actions.
+services and the web app deploy to **Cloudflare** from GitHub Actions, and the
+mobile app wraps the web app in a native shell. All four are functional.
 
 ## Layout
 
@@ -14,45 +15,51 @@ apps/
   mobile/       Expo / React Native — a WebView shell around the web app (not a workspace member)
 services/
   profile-sync/ Hono + Workers + D1 — cursor-based cloud sync (rewritten from Laravel/PHP)
-  course-ls/    Hono + Workers — nearby-course lookup (prototype, mock data)
+  course-ls/    Hono + Workers — golf-course typeahead (Google Places + a two-tier edge cache)
 packages/
-  shared/       @ygb/shared — the sync wire contract (types + zod schemas), shared by web and profile-sync
+  shared/       @ygb/shared — wire contracts (types + zod), shared by web and both services
 docs/           Architecture, deployment, roadmap
 ```
 
-| App                          | Status | Deploys as        |
-| ---------------------------- | ------ | ----------------- |
-| [`apps/web`](./apps/web)     | ✅ in use | `ygb-web` |
-| [`services/profile-sync`](./services/profile-sync) | ✅ working | `ygb-profile-sync` (+ D1) |
-| [`services/course-ls`](./services/course-ls) | 🟡 prototype (mock data) | `ygb-course-ls` |
-| [`apps/mobile`](./apps/mobile) | ✅ WebView wrapper (Expo, needs EAS build to ship) | — |
+| App | Status | Where |
+| --- | ------ | ----- |
+| [`apps/web`](./apps/web)                          | ✅ Live | https://ygb-web.peter-686.workers.dev |
+| [`services/profile-sync`](./services/profile-sync) | ✅ Live | `ygb-profile-sync` Worker + D1 |
+| [`services/course-ls`](./services/course-ls)       | ✅ Live | `ygb-course-ls` Worker + KV |
+| [`apps/mobile`](./apps/mobile)                     | ✅ Builds | Expo — ship with EAS Build |
 
 Each app has its own README with detail. AI agents: see [`AGENTS.md`](./AGENTS.md).
 
 ## How the pieces fit
 
 ```
-        ┌──────────────┐   cursor sync   ┌──────────────────┐
-        │  apps/web    │◀───────────────▶│ profile-sync     │
-        │  IndexedDB   │  /api/sync/*    │ Hono · D1        │
-        └──────┬───────┘                 └──────────────────┘
-               │ shares types
-               ▼
+                          course suggestions        ┌──────────────┐
+        ┌──────────────┐  /courses/search   ───────▶│  course-ls   │──▶ Google Places
+        │  apps/web    │────────────────────────────│  Hono · KV   │
+        │  Next.js PWA │                            └──────────────┘
+        │  IndexedDB   │       cursor sync           ┌──────────────────┐
+        │              │◀──────────────────────────▶ │  profile-sync    │──▶ D1 (SQLite)
+        └──────┬───────┘       /sync/*               │  Hono · Drizzle  │
+               │                                     └──────────────────┘
+               │ both sides share ▼
         ┌──────────────┐
-        │ @ygb/shared  │  request/response contract (types + zod)
+        │  @ygb/shared │  request/response contracts (types + zod)
         └──────────────┘
 
-  course-ls (nearby courses, not yet wired to any client)
-  apps/mobile — native shell: a full-screen WebView on the deployed web app
+  apps/mobile ── native shell: a full-screen WebView on the deployed web app
 ```
 
 - **web** stores everything locally (anonymous profile + rounds in IndexedDB)
-  and works fully offline. When online and sync is enabled it does cursor-based
+  and works fully offline. Cloud sync is opt-in (Settings) and does cursor-based
   push/pull against **profile-sync**. Identity is a local anonymous profile —
   no accounts, no third-party auth (see [`docs/identity.md`](./docs/identity.md)).
 - **profile-sync** is single-user and unauthenticated. UUID ids, ISO-8601
   timestamps, soft deletes, `max(updated_at, deleted_at)` cursors per table.
-- **course-ls** is a separate concern and not yet integrated.
+- **course-ls** backs the new-round course typeahead: it wraps Google Places
+  Text Search and serves repeat queries from a Cache API → Workers KV → Google
+  chain so keystrokes stay fast and cheap.
+- **mobile** is a `react-native-webview` pointed at the deployed web app, plus
+  the native niceties (icon, splash, hardware-back, geolocation prompt).
 
 ## Run it locally
 
