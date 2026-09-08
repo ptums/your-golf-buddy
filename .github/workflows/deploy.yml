@@ -1,0 +1,97 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.filter.outputs.web }}
+      profile-sync: ${{ steps.filter.outputs.profile-sync }}
+      course-ls: ${{ steps.filter.outputs.course-ls }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            common: &common
+              - '.github/workflows/deploy.yml'
+              - 'pnpm-lock.yaml'
+              - 'packages/shared/**'
+            web:
+              - *common
+              - 'apps/web/**'
+            profile-sync:
+              - *common
+              - 'services/profile-sync/**'
+            course-ls:
+              - '.github/workflows/deploy.yml'
+              - 'pnpm-lock.yaml'
+              - 'services/course-ls/**'
+
+  profile-sync:
+    needs: changes
+    if: needs.changes.outputs.profile-sync == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @ygb/shared build
+      - name: Apply D1 migrations
+        run: pnpm --filter profile-sync exec wrangler d1 migrations apply ygb-profile-sync --remote
+      - name: Deploy
+        run: pnpm --filter profile-sync exec wrangler deploy
+
+  course-ls:
+    needs: changes
+    if: needs.changes.outputs.course-ls == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Deploy
+        run: pnpm --filter course-ls exec wrangler deploy
+
+  web:
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @ygb/shared build
+      - name: Build (OpenNext)
+        run: pnpm --filter web exec opennextjs-cloudflare build
+        env:
+          # Public URL, inlined into the client bundle. Set as a repo variable
+          # (Settings -> Secrets and variables -> Actions -> Variables).
+          NEXT_PUBLIC_SYNC_ENDPOINT: ${{ vars.NEXT_PUBLIC_SYNC_ENDPOINT }}
+      - name: Deploy
+        run: pnpm --filter web exec opennextjs-cloudflare deploy

@@ -1,17 +1,19 @@
 # Your Golf Buddy — Mobile App
 
 An Expo / React Native client intended to become the native counterpart of the
-[Your Golf Buddy web app](../web).
+[Your Golf Buddy web app](../../apps/web).
 
 **Status:** 🔴 Scaffold only — not started. This is still the stock
 `create-expo-app` template (home/explore tabs, themed components, parallax
 demo screens). The only Golf Buddy-specific addition is an empty
-`app/(tabs)/game/index.tsx`. No score tracking, profiles, or sync yet. The repo
-has one commit ("Initial commit") and no remote.
+`app/(tabs)/game/index.tsx`. No score tracking, profiles, or sync yet.
 
-The intent (from `../docs/features.md` and `../notes/08-16-2025.md`) is to port
-the web app's features into React Native, likely inside a Turborepo monorepo
-shared with the web client.
+It now lives in the monorepo but is **not a pnpm workspace member** — React
+Native / Metro needs its own hoisted `node_modules`, so it keeps its own
+`package-lock.json` and is installed with `npm install` from this directory.
+The intent (from `../../docs/features.md` and `../../notes/08-16-2025.md`) is to
+port the web app's features into React Native and share `@ygb/shared` types with
+the web client.
 
 ## Tech stack
 
@@ -58,7 +60,7 @@ hooks/                   use-color-scheme, use-theme-color
 
 ## Next steps
 
-1. Decide on the monorepo move (share types/DB logic with `../web`).
-2. Build the profile + round-tracking screens (mirror `web/lib/db.ts`).
-3. Wire sync to the [Profile Sync](../profile-sync) service.
+1. Add it to the pnpm workspace (or keep standalone) and pull in `@ygb/shared`.
+2. Build the profile + round-tracking screens (mirror `apps/web/lib/db.ts`).
+3. Wire sync to the [profile-sync](../../services/profile-sync) service.
 4. Strip the leftover template screens (`explore`, `modal`, parallax demo).
