@@ -9,7 +9,7 @@ monorepo**, all TypeScript, everything deploys to **Cloudflare**.
 
 ```
 apps/web/              Next.js 15 PWA (the product). Cloudflare Workers via @opennextjs/cloudflare.
-apps/mobile/           Expo scaffold — NOT started, NOT a pnpm workspace member. Ignore unless asked.
+apps/mobile/           Expo native shell — one full-screen WebView on the deployed web app. NOT a pnpm workspace member (own `npm install`).
 services/profile-sync/ Hono + Workers + D1 + Drizzle. Cursor-based cloud sync.
 services/course-ls/    Hono + Workers. Golf-course typeahead wrapping Google Places + a 2-tier cache.
 packages/shared/       @ygb/shared — wire contracts (types + zod). Imported by web + both services.

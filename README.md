@@ -11,7 +11,7 @@ services and the web app all deploy to **Cloudflare** from GitHub Actions.
 ```
 apps/
   web/          Next.js 15 PWA — the primary client (Cloudflare Workers via @opennextjs/cloudflare)
-  mobile/       Expo / React Native — scaffold only, not started (not a workspace member)
+  mobile/       Expo / React Native — a WebView shell around the web app (not a workspace member)
 services/
   profile-sync/ Hono + Workers + D1 — cursor-based cloud sync (rewritten from Laravel/PHP)
   course-ls/    Hono + Workers — nearby-course lookup (prototype, mock data)
@@ -25,7 +25,7 @@ docs/           Architecture, deployment, roadmap
 | [`apps/web`](./apps/web)     | ✅ in use | `ygb-web` |
 | [`services/profile-sync`](./services/profile-sync) | ✅ working | `ygb-profile-sync` (+ D1) |
 | [`services/course-ls`](./services/course-ls) | 🟡 prototype (mock data) | `ygb-course-ls` |
-| [`apps/mobile`](./apps/mobile) | 🔴 scaffold only | — |
+| [`apps/mobile`](./apps/mobile) | ✅ WebView wrapper (Expo, needs EAS build to ship) | — |
 
 Each app has its own README with detail. AI agents: see [`AGENTS.md`](./AGENTS.md).
 
@@ -43,7 +43,7 @@ Each app has its own README with detail. AI agents: see [`AGENTS.md`](./AGENTS.m
         └──────────────┘
 
   course-ls (nearby courses, not yet wired to any client)
-  apps/mobile (placeholder)
+  apps/mobile — native shell: a full-screen WebView on the deployed web app
 ```
 
 - **web** stores everything locally (anonymous profile + rounds in IndexedDB)
@@ -90,7 +90,10 @@ pnpm turbo run typecheck lint test build   # what CI runs
 ```
 
 `apps/mobile` is **not** in the pnpm workspace (React Native / Metro needs its
-own hoisted `node_modules`). Work on it with `cd apps/mobile && npm install && npx expo start`.
+own hoisted `node_modules`). It's a thin native shell — one full-screen WebView
+on the deployed web app. Work on it with
+`cd apps/mobile && npm install && npx expo start`; ship it with EAS Build (see
+its README).
 
 ## Deploy
 
@@ -117,6 +120,7 @@ This repo was assembled from three separate repos in Sept 2026:
 - `apps/web` keeps its full history (imported via `git subtree`).
 - `services/profile-sync` was **rewritten** from Laravel/PHP to TypeScript; the
   sync wire contract is unchanged, so the web client needed no sync-logic changes.
-- `services/course-ls` was ported from Express to Hono; `apps/mobile` came in as-is.
+- `services/course-ls` was ported from Express to Hono; `apps/mobile` went from a
+  create-expo-app scaffold to a WebView wrapper.
 - Clerk was already gone from all code; only the docs referenced it, and those
   were removed.

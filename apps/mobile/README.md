@@ -1,65 +1,73 @@
 # Your Golf Buddy — Mobile App
 
-An Expo / React Native client intended to become the native counterpart of the
-[Your Golf Buddy web app](../../apps/web).
+A thin native shell around the [web app](../../apps/web). It's an Expo / React
+Native project whose only screen is a full-screen `WebView` pointed at the
+deployed PWA (`https://ygb-web.peter-686.workers.dev`).
 
-**Status:** 🔴 Scaffold only — not started. This is still the stock
-`create-expo-app` template (home/explore tabs, themed components, parallax
-demo screens). The only Golf Buddy-specific addition is an empty
-`app/(tabs)/game/index.tsx`. No score tracking, profiles, or sync yet.
+**Status:** ✅ Functional. The web app is already offline-first (service worker +
+IndexedDB), so once it has loaded once it keeps working without a connection.
 
-It now lives in the monorepo but is **not a pnpm workspace member** — React
-Native / Metro needs its own hoisted `node_modules`, so it keeps its own
-`package-lock.json` and is installed with `npm install` from this directory.
-The intent (see `../../docs/features.md`) is to port the web app's features into
-React Native and share `@ygb/shared` types with the web client.
+## Why a WebView
 
-## Tech stack
+One codebase (the web app) drives every platform. The native wrapper adds: a home
+screen icon, a splash screen, native geolocation prompts for the course
+typeahead, Android hardware-back handling, and "open external links in the system
+browser".
 
-| Concern     | Choice                                              |
-| ----------- | ------------------------------------------------- |
-| Framework   | Expo SDK ~54, React Native 0.81, React 19         |
-| Routing     | `expo-router` v6 (file-based, typed routes on)    |
-| Navigation  | React Navigation v7 (bottom tabs)                 |
-| Language    | TypeScript ~5.9                                   |
-| Arch        | New Architecture enabled; React Compiler experiment on |
-| Lint        | `eslint-config-expo`                              |
+## Stack
 
-## Getting started
+| Concern   | Choice                            |
+| --------- | ------------------------------- |
+| Framework | Expo SDK 54, React Native 0.81  |
+| Routing   | expo-router (one screen: `app/index.tsx`) |
+| Web view  | `react-native-webview` 13.15    |
+| Builds    | EAS Build (`eas.json`)          |
+
+Not a pnpm workspace member — React Native / Metro needs its own hoisted
+`node_modules`. Install with `npm install` from this directory.
+
+## Develop
 
 ```bash
+cd apps/mobile
 npm install
-npx expo start        # then press i / a / w, or scan the QR with Expo Go
+npx expo start          # then press i (iOS sim) / a (Android) / scan QR with Expo Go
 ```
 
-| Script              | What it does                     |
-| ------------------- | ------------------------------- |
-| `npm start`         | `expo start`                    |
-| `npm run ios`       | Open in iOS simulator           |
-| `npm run android`   | Open in Android emulator        |
-| `npm run web`       | Run as a web build              |
-| `npm run lint`      | `expo lint`                     |
-| `npm run reset-project` | Move the starter code to `app-example/` and start a blank `app/` |
+`react-native-webview` is bundled in Expo Go, so no custom dev build is needed
+to run it.
 
-## Project layout
+The web URL comes from `app.json` → `expo.extra.webUrl`. Point it at a local
+`pnpm --filter web dev` (use your machine's LAN IP, not `localhost`) to test
+against unreleased web changes.
 
-```
-app/
-  _layout.tsx            Root stack (tabs + modal)
-  modal.tsx              Demo modal screen
-  (tabs)/
-    _layout.tsx          Bottom tab bar
-    index.tsx            "Home" — template content
-    explore.tsx          "Explore" — template content
-    game/index.tsx       Empty — placeholder for the scorecard feature
-components/              Themed text/view, parallax scroll, haptic tab, icons
-constants/theme.ts       Colors + fonts
-hooks/                   use-color-scheme, use-theme-color
+## Build & release
+
+```bash
+npm i -g eas-cli
+eas login
+eas init                 # writes expo.extra.eas.projectId into app.json
+eas build --profile preview --platform android    # installable APK
+eas build --profile production --platform all      # store builds
+eas submit --platform ios      # / android
 ```
 
-## Next steps
+Profiles are in `eas.json` (`development` / `preview` / `production`).
 
-1. Add it to the pnpm workspace (or keep standalone) and pull in `@ygb/shared`.
-2. Build the profile + round-tracking screens (mirror `apps/web/lib/db.ts`).
-3. Wire sync to the [profile-sync](../../services/profile-sync) service.
-4. Strip the leftover template screens (`explore`, `modal`, parallax demo).
+## What the wrapper handles (`app/index.tsx`)
+
+- Loading spinner on first load; a "Try again" screen if the initial load fails.
+- Android hardware back → walks WebView history before exiting.
+- Links to other hosts open in the system browser (`expo-web-browser`); the app
+  host stays in the WebView.
+- `geolocationEnabled` + iOS `NSLocationWhenInUseUsageDescription` + Android
+  location permissions, so the course typeahead's "near me" ranking works.
+- Pull-to-refresh (iOS).
+- Web `console.*` and errors are bridged into the Metro logs.
+
+## Follow-ups
+
+- Icons are solid brand-orange placeholders (`assets/images/`). Swap in a real
+  logo before shipping.
+- Consider `expo-notifications` for a "you haven't logged a round in a while"
+  nudge, and deep links (`yourgolfbuddy://`) into specific screens.
