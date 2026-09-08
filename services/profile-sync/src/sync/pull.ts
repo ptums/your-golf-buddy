@@ -1,4 +1,4 @@
-import { and, asc, gt, isNotNull, or } from "drizzle-orm";
+import { and, asc, eq, gt, isNotNull, or } from "drizzle-orm";
 import type { AnySQLiteColumn } from "drizzle-orm/sqlite-core";
 import type {
   ServerChanges,
@@ -103,16 +103,21 @@ async function changedGames(
   limit: number,
 ): Promise<ServerGame[]> {
   const rows = await db
-    .select()
+    .select({
+      game: games,
+      courseExternalId: courses.externalId,
+    })
     .from(games)
+    .leftJoin(courses, eq(games.courseId, courses.id))
     .where(sinceCondition(games.updatedAt, games.deletedAt, cursor))
     .orderBy(asc(games.updatedAt))
     .limit(limit);
-  return rows.map((r) => ({
+  return rows.map(({ game: r, courseExternalId }) => ({
     id: r.id,
     profile_id: r.profileId,
     external_id: r.externalId,
     course_id: r.courseId,
+    course_external_id: courseExternalId ?? null,
     date: r.date,
     final_note: r.finalNote,
     final_score: r.finalScore,
@@ -128,16 +133,21 @@ async function changedScores(
   limit: number,
 ): Promise<ServerScore[]> {
   const rows = await db
-    .select()
+    .select({
+      score: scores,
+      gameExternalId: games.externalId,
+    })
     .from(scores)
+    .leftJoin(games, eq(scores.gameId, games.id))
     .where(sinceCondition(scores.updatedAt, scores.deletedAt, cursor))
     .orderBy(asc(scores.updatedAt))
     .limit(limit);
-  return rows.map((r) => ({
+  return rows.map(({ score: r, gameExternalId }) => ({
     id: r.id,
     profile_id: r.profileId,
     external_id: r.externalId,
     game_id: r.gameId,
+    game_external_id: gameExternalId ?? null,
     hole: r.hole,
     par: r.par,
     score: r.score,

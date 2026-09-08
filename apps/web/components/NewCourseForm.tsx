@@ -86,8 +86,11 @@ export default function NewCourseForm() {
     inputRef.current?.focus();
   };
 
-  const suggestionsVisible =
-    enabled && showSuggestions && !justPickedRef.current && results.length > 0;
+  const panelVisible =
+    enabled &&
+    showSuggestions &&
+    !justPickedRef.current &&
+    courseName.trim().length >= 2;
 
   // no games → show "Add new course" form
   return (
@@ -115,36 +118,40 @@ export default function NewCourseForm() {
             className="w-full bg-white p-3 border-2 rounded font-sans focus:outline-none focus:border-yellow-500 text-cyan-900 font-semibold"
           />
 
-          {suggestionsVisible && (
+          {panelVisible && (results.length > 0 || loading) && (
             <ul className="absolute z-10 mt-1 w-full bg-white border-2 border-amber-200 rounded shadow-lg max-h-64 overflow-auto">
-              {results.map((r) => (
-                <li key={r.placeId}>
-                  <button
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => onPickSuggestion(r.name)}
-                    className="w-full text-left px-3 py-2 hover:bg-amber-50 focus:bg-amber-50 focus:outline-none cursor-pointer"
-                  >
-                    <span className="block font-semibold text-slate-800">
-                      {r.name}
-                    </span>
-                    {r.address && (
-                      <span className="block text-xs text-slate-500">
-                        {r.address}
-                        {typeof r.distanceKm === "number" &&
-                          ` · ${r.distanceKm} km`}
+              {loading && results.length === 0 ? (
+                <li className="px-3 py-2 text-sm text-slate-400">Searching…</li>
+              ) : (
+                results.map((r) => (
+                  <li key={r.placeId}>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => onPickSuggestion(r.name)}
+                      className="w-full text-left px-3 py-2 hover:bg-amber-50 focus:bg-amber-50 focus:outline-none cursor-pointer"
+                    >
+                      <span className="block font-semibold text-slate-800">
+                        {r.name}
                       </span>
-                    )}
-                  </button>
-                </li>
-              ))}
+                      {r.address && (
+                        <span className="block text-xs text-slate-500">
+                          {r.address}
+                          {typeof r.distanceKm === "number" &&
+                            ` · ${r.distanceKm} km`}
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                ))
+              )}
             </ul>
           )}
 
-          {enabled && loading && courseName.trim().length >= 2 && (
-            <span className="absolute right-3 top-3 text-xs text-slate-400">
-              searching…
-            </span>
+          {panelVisible && !loading && results.length === 0 && (
+            <p className="absolute z-10 mt-1 w-full bg-white border-2 border-amber-200 rounded shadow-lg px-3 py-2 text-xs text-slate-500">
+              No matching courses nearby — type the name to add it yourself.
+            </p>
           )}
         </div>
 

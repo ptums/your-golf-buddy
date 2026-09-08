@@ -121,6 +121,7 @@ describe("profile-sync", () => {
       profile_id: PROFILE_ID,
       external_id: "game:42",
       course_id: course.id,
+      course_external_id: "course:7",
       final_note: "windy",
       final_score: 88,
     });
@@ -128,6 +129,7 @@ describe("profile-sync", () => {
       profile_id: PROFILE_ID,
       external_id: "score:9001",
       game_id: game.id,
+      game_external_id: "game:42",
       hole: 1,
       par: "4",
       score: "5",

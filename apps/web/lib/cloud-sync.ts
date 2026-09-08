@@ -4,8 +4,10 @@ import { db } from "./db";
 import type {
   SyncCursors,
   SyncStatus,
-  SyncStateResponse,
   SyncPushResponse,
+  ServerCourse,
+  ServerGame,
+  ServerScore,
 } from "@ygb/shared";
 
 // The canonical wire contract lives in @ygb/shared and is shared with the
@@ -18,16 +20,14 @@ export type {
   SyncPushResponse,
 } from "@ygb/shared";
 
-// Local shapes where the browser client is deliberately loose: `SyncData`
-// still holds pre-serialization values, and `applyChanges` writes raw server
-// rows into Dexie's numeric keyspace.
-// TODO(sync): reconcile these with the @ygb/shared server-row types.
+// `SyncData` still holds pre-serialization values (a Date on games), so it
+// stays local rather than reusing the @ygb/shared type.
 interface SyncPullResponse {
   changes: {
     profiles: any[];
-    courses: any[];
-    games: any[];
-    scores: any[];
+    courses: ServerCourse[];
+    games: ServerGame[];
+    scores: ServerScore[];
   };
   serverCursors: SyncCursors;
 }
@@ -130,24 +130,15 @@ class CloudSyncService {
       // Set syncing status
       localStorage.setItem("golf_buddy_sync_status", "syncing");
 
-      // Step 1: Check sync state
-      const syncState = await this.checkSyncState();
-
-      if (syncState.inSync) {
-        console.log("Data is already in sync");
-        localStorage.setItem("golf_buddy_sync_status", "success");
-        this.setLastSyncTime(new Date().toISOString());
-        this.scheduleNextSync();
-        return true;
-      }
-
-      // Step 2: Push local changes
+      // Always push: upserts are idempotent, and the client can't reliably
+      // tell whether its local data is already on the server (a cursor-only
+      // check reports "in sync" whenever both sides look empty).
       const pushSuccess = await this.pushChanges();
       if (!pushSuccess) {
         throw new Error("Failed to push changes");
       }
 
-      // Step 3: Pull server changes
+      // Then pull anything new from the server.
       const pullSuccess = await this.pullChanges();
       if (!pullSuccess) {
         throw new Error("Failed to pull changes");
@@ -155,6 +146,7 @@ class CloudSyncService {
 
       localStorage.setItem("golf_buddy_sync_status", "success");
       this.setLastSyncTime(new Date().toISOString());
+      localStorage.setItem("golf_buddy_last_success", Date.now().toString());
       this.scheduleNextSync();
       return true;
     } catch (error) {
@@ -164,26 +156,9 @@ class CloudSyncService {
         "golf_buddy_last_error",
         error instanceof Error ? error.message : "Unknown error"
       );
+      localStorage.setItem("golf_buddy_last_error_at", Date.now().toString());
       return false;
     }
-  }
-
-  private async checkSyncState(): Promise<SyncStateResponse> {
-    const cursors = this.getCursors();
-
-    const response = await fetch(`${this.SYNC_BASE_URL}/sync/state`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ cursors }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return response.json();
   }
 
   private async pushChanges(): Promise<boolean> {
@@ -257,19 +232,77 @@ class CloudSyncService {
     }
   }
 
+  /**
+   * Merge server rows into the local Dexie stores.
+   *
+   * Server rows use UUID ids + snake_case; local rows use Dexie's numeric
+   * autoincrement id. The bridge is `external_id` (`course:7`, `game:42`,
+   * `score:9001`), which encodes the row's original local id — so we map
+   * back to that and `put`/`delete` by it. Tombstones (`deleted_at`) become
+   * deletes.
+   */
   private async applyChanges(
     changes: SyncPullResponse["changes"]
   ): Promise<void> {
-    if (changes.courses.length > 0 && db) {
-      await db.courses.bulkPut(changes.courses);
+    if (!db) return;
+
+    const localId = (external: string | null | undefined): number | null => {
+      if (!external) return null;
+      const n = Number(external.split(":").pop());
+      return Number.isInteger(n) && n > 0 ? n : null;
+    };
+
+    for (const c of changes.courses) {
+      const id = localId(c.external_id);
+      if (id == null) continue;
+      if (c.deleted_at) {
+        await db.courses.delete(id);
+      } else {
+        await db.courses.put({
+          id,
+          name: c.name,
+          rounds: c.rounds === 9 ? 9 : 18,
+          profileId: c.profile_id,
+        });
+      }
     }
 
-    if (changes.games.length > 0 && db) {
-      await db.games.bulkPut(changes.games);
+    for (const g of changes.games) {
+      const id = localId(g.external_id);
+      if (id == null) continue;
+      if (g.deleted_at) {
+        await db.games.delete(id);
+        continue;
+      }
+      const courseId = localId(g.course_external_id);
+      if (courseId == null) continue; // owning course not resolvable yet
+      await db.games.put({
+        id,
+        courseId,
+        date: new Date(g.date),
+        finalNote: g.final_note ?? "",
+        finalScore: g.final_score ?? 0,
+        scores: [],
+      });
     }
 
-    if (changes.scores.length > 0 && db) {
-      await db.scores.bulkPut(changes.scores);
+    for (const s of changes.scores) {
+      const id = localId(s.external_id);
+      if (id == null) continue;
+      if (s.deleted_at) {
+        await db.scores.delete(id);
+        continue;
+      }
+      const gameId = localId(s.game_external_id);
+      if (gameId == null) continue;
+      await db.scores.put({
+        id,
+        gameId,
+        hole: s.hole,
+        par: s.par,
+        score: s.score,
+        putts: s.putts,
+      });
     }
   }
 

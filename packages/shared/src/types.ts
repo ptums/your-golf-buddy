@@ -112,6 +112,8 @@ export interface ServerCourse extends ServerRowBase {
 
 export interface ServerGame extends ServerRowBase {
   course_id: string;
+  /** external_id of the owning course, e.g. `course:7` — lets the client resolve its local id. */
+  course_external_id: string | null;
   date: string;
   final_note: string | null;
   final_score: number | null;
@@ -119,6 +121,8 @@ export interface ServerGame extends ServerRowBase {
 
 export interface ServerScore extends ServerRowBase {
   game_id: string;
+  /** external_id of the owning game, e.g. `game:42`. */
+  game_external_id: string | null;
   hole: number;
   par: string;
   score: string;
