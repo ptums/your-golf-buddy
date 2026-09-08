@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ygb-course-ls",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    // Not yet consumed — CourseService still returns mock data.
+    "EXTERNAL_API_URL": "https://api.example.com/courses"
+  }
+}

@@ -1,90 +1,68 @@
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import { CourseService } from "./services/CourseService";
+import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { CacheService } from "./services/CacheService";
+import { CourseService } from "./services/CourseService";
 
-// Load environment variables
-dotenv.config();
+const app = new Hono<{ Bindings: Env }>();
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+app.use("*", cors());
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// Initialize services
+// Services hold only in-memory state; on Workers that state is per-isolate and
+// short-lived. Fine for the mock prototype — a real deployment needs Workers KV
+// or the Cache API (see README).
 const cacheService = new CacheService();
 const courseService = new CourseService(cacheService);
 
-// Health check endpoint
-app.get("/health", (req, res) => {
-  res.json({
+app.get("/health", (c) =>
+  c.json({
     status: "healthy",
     timestamp: new Date().toISOString(),
     service: "course-location-service",
-  });
-});
+  }),
+);
 
-// Main course endpoint
-app.get("/courses", async (req, res) => {
-  try {
-    const { lat, lng, radius = 10, limit = 20 } = req.query;
+app.get("/courses", async (c) => {
+  const { lat, lng, radius, limit } = c.req.query();
 
-    // Validate required parameters
-    if (!lat || !lng) {
-      return res.status(400).json({
-        error: "Missing required parameters: lat and lng",
-      });
-    }
-
-    const latitude = parseFloat(lat as string);
-    const longitude = parseFloat(lng as string);
-    const searchRadius = parseInt(radius as string);
-    const resultLimit = parseInt(limit as string);
-
-    // Validate coordinates
-    if (isNaN(latitude) || isNaN(longitude)) {
-      return res.status(400).json({
-        error: "Invalid coordinates provided",
-      });
-    }
-
-    if (
-      latitude < -90 ||
-      latitude > 90 ||
-      longitude < -180 ||
-      longitude > 180
-    ) {
-      return res.status(400).json({
-        error: "Coordinates out of valid range",
-      });
-    }
-
-    // Get courses
-    const result = await courseService.getCourses({
-      lat: latitude,
-      lng: longitude,
-      radius: searchRadius,
-      limit: resultLimit,
-    });
-
-    res.json(result);
-  } catch (error) {
-    console.error("Error fetching courses:", error);
-    res.status(500).json({
-      error: "Internal server error",
-      message: error instanceof Error ? error.message : "Unknown error",
-    });
+  if (!lat || !lng) {
+    return c.json({ error: "Missing required parameters: lat and lng" }, 400);
   }
+
+  const latitude = Number.parseFloat(lat);
+  const longitude = Number.parseFloat(lng);
+  const searchRadius = radius ? Number.parseInt(radius, 10) : 10;
+  const resultLimit = limit ? Number.parseInt(limit, 10) : 20;
+
+  if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
+    return c.json({ error: "Invalid coordinates provided" }, 400);
+  }
+  if (
+    latitude < -90 ||
+    latitude > 90 ||
+    longitude < -180 ||
+    longitude > 180
+  ) {
+    return c.json({ error: "Coordinates out of valid range" }, 400);
+  }
+
+  const result = await courseService.getCourses({
+    lat: latitude,
+    lng: longitude,
+    radius: searchRadius,
+    limit: resultLimit,
+  });
+  return c.json(result);
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Course Location Service running on port ${PORT}`);
-  console.log(`📍 Health check: http://localhost:${PORT}/health`);
-  console.log(
-    `🏌️  Courses endpoint: http://localhost:${PORT}/courses?lat=40.7128&lng=-74.0060`
+app.onError((err, c) => {
+  console.error("course-ls error:", err);
+  return c.json(
+    {
+      error: "Internal server error",
+      message: err instanceof Error ? err.message : "Unknown error",
+    },
+    500,
   );
 });
+
+export default app;

@@ -1,17 +1,11 @@
-import {
-  Course,
-  CourseSummary,
-  CourseRequest,
-  CourseResponse,
-  ExternalCourseAPIResponse,
-} from "../types";
+import { Course, CourseSummary, CourseRequest, CourseResponse } from "../types";
 import { CacheService } from "./CacheService";
-import axios from "axios";
 
 export class CourseService {
   private cacheService: CacheService;
-  private readonly EXTERNAL_API_URL =
-    process.env.EXTERNAL_API_URL || "https://api.example.com/courses";
+  // Not yet consumed — fetchFromExternalAPI() returns mock data. A real
+  // implementation would read this from an env binding and use `fetch()`.
+  private readonly EXTERNAL_API_URL = "https://api.example.com/courses";
 
   constructor(cacheService: CacheService) {
     this.cacheService = cacheService;
