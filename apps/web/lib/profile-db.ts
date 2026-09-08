@@ -111,6 +111,15 @@ class ProfileDatabase {
     }
   }
 
+  /**
+   * Create or replace a profile by id. Used to restore from a recovery key
+   * and to apply profile rows pulled from the sync service.
+   */
+  async putProfile(profile: Profile): Promise<void> {
+    const db = await this.ensureDB();
+    await db.put("profiles", profile);
+  }
+
   async getProfileById(id: string): Promise<Profile | null> {
     const db = await this.ensureDB();
     try {

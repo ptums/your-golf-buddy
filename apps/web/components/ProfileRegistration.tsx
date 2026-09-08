@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { profileDB } from "@/lib/profile-db";
+import { cloudSync, extractProfileKey } from "@/lib/cloud-sync";
 
 export default function ProfileRegistration() {
   const router = useRouter();
@@ -11,6 +12,34 @@ export default function ProfileRegistration() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [hasProfile, setHasProfile] = useState(false);
+
+  const [showRestore, setShowRestore] = useState(false);
+  const [restoreKey, setRestoreKey] = useState("");
+  const [restoreError, setRestoreError] = useState("");
+
+  const handleRestore = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRestoreError("");
+    if (!extractProfileKey(restoreKey)) {
+      setRestoreError("That doesn't look like a profile key.");
+      return;
+    }
+    if (!cloudSync) {
+      setRestoreError("Sync isn't available right now.");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const name = await cloudSync.restoreProfile(restoreKey);
+      if (name) {
+        router.push("/games");
+      } else {
+        setRestoreError("No data found for that key. Check it and try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     // Check if user already has a profile
@@ -160,6 +189,61 @@ export default function ProfileRegistration() {
               This creates a local profile on your device. No data is sent to
               any server.
             </p>
+          </div>
+
+          <div className="mt-6 border-t border-amber-200 pt-4">
+            {!showRestore ? (
+              <button
+                type="button"
+                onClick={() => setShowRestore(true)}
+                className="w-full text-sm text-slate-600 underline underline-offset-2 hover:text-slate-900"
+              >
+                Already use Your Golf Buddy? Restore with your profile key
+              </button>
+            ) : (
+              <form onSubmit={handleRestore} className="space-y-3">
+                <label
+                  htmlFor="restoreKey"
+                  className="block text-sm font-medium text-slate-700"
+                >
+                  Profile key
+                </label>
+                <input
+                  id="restoreKey"
+                  type="text"
+                  autoComplete="off"
+                  value={restoreKey}
+                  onChange={(e) => setRestoreKey(e.target.value)}
+                  placeholder="00000000-0000-0000-0000-000000000000"
+                  className="w-full px-3 py-2 border-2 border-amber-200 rounded-lg font-mono text-sm focus:outline-none focus:border-orange-500"
+                />
+                <p className="text-xs text-slate-500">
+                  Find it under Settings → Cloud Sync on your other device.
+                </p>
+                {restoreError && (
+                  <p className="text-sm text-red-600">{restoreError}</p>
+                )}
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="flex-1 bg-orange-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors"
+                  >
+                    {isLoading ? "Restoring…" : "Restore"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowRestore(false);
+                      setRestoreError("");
+                    }}
+                    className="text-sm text-slate-500 px-2"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       </div>

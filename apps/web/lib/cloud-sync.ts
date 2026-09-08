@@ -5,6 +5,7 @@ import type {
   SyncCursors,
   SyncStatus,
   SyncPushResponse,
+  ServerProfile,
   ServerCourse,
   ServerGame,
   ServerScore,
@@ -24,7 +25,7 @@ export type {
 // stays local rather than reusing the @ygb/shared type.
 interface SyncPullResponse {
   changes: {
-    profiles: any[];
+    profiles: ServerProfile[];
     courses: ServerCourse[];
     games: ServerGame[];
     scores: ServerScore[];
@@ -42,6 +43,14 @@ interface SyncData {
     lastSync: string;
     version: string;
   };
+}
+
+/** Pull a profile UUID out of whatever the user pasted (bare, or with noise). */
+export function extractProfileKey(input: string): string | null {
+  const m = input.match(
+    /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
+  );
+  return m ? m[0].toLowerCase() : null;
 }
 
 class CloudSyncService {
@@ -258,6 +267,28 @@ class CloudSyncService {
   private async applyChanges(
     changes: SyncPullResponse["changes"]
   ): Promise<void> {
+    // Profiles live in a separate IndexedDB (GolfBuddyProfiles). Keep the local
+    // profile row in step with the server — this is also how a restore learns
+    // the real username after adopting a key.
+    const currentId = this.getProfileId();
+    for (const p of changes.profiles) {
+      if (!profileDB) break;
+      if (p.deleted_at) {
+        await profileDB.deleteProfile(p.id).catch(() => {});
+      } else {
+        await profileDB.putProfile({
+          id: p.id,
+          username: p.username,
+          dobHash: p.dob_hash,
+          createdAt: p.created_at,
+          lastActiveAt: p.updated_at,
+        });
+        if (p.id === currentId && typeof window !== "undefined") {
+          localStorage.setItem("golf_buddy_username", p.username);
+        }
+      }
+    }
+
     if (!db) return;
 
     const localId = (external: string | null | undefined): number | null => {
@@ -387,6 +418,50 @@ class CloudSyncService {
       console.error("Failed to delete synced data:", error);
       return false;
     }
+  }
+
+  /**
+   * Adopt an existing profile from its key and pull its data down. Use this on
+   * a new device / after clearing the browser. Returns the recovered username,
+   * or null if the key is malformed or has no data on the server (in which case
+   * nothing is left behind).
+   */
+  async restoreProfile(rawKey: string): Promise<string | null> {
+    const id = extractProfileKey(rawKey);
+    if (!id || typeof window === "undefined" || !profileDB) return null;
+
+    const stubName = `golfer-${id.slice(0, 8)}`;
+    await profileDB.putProfile({
+      id,
+      username: stubName,
+      dobHash: "",
+      createdAt: new Date().toISOString(),
+      lastActiveAt: new Date().toISOString(),
+    });
+    localStorage.setItem("golf_buddy_profile_id", id);
+    localStorage.setItem("golf_buddy_username", stubName);
+    localStorage.removeItem(this.CURSORS_KEY);
+    localStorage.removeItem("golf_buddy_last_sync");
+
+    const pulled = await this.pullChanges(); // bearer token is now `id`
+    const profile = pulled ? await profileDB.getProfileById(id) : null;
+    const restored =
+      profile && profile.username && !profile.username.startsWith("golfer-");
+
+    if (!restored) {
+      // clean up — no data for that key
+      await profileDB.deleteProfile(id).catch(() => {});
+      localStorage.removeItem("golf_buddy_profile_id");
+      localStorage.removeItem("golf_buddy_username");
+      localStorage.removeItem(this.CURSORS_KEY);
+      return null;
+    }
+
+    localStorage.setItem("golf_buddy_username", profile.username);
+    this.setSyncEnabled(true);
+    this.setLastSyncTime(new Date().toISOString());
+    this.scheduleNextSync();
+    return profile.username;
   }
 
   getSyncStatus(): SyncStatus {

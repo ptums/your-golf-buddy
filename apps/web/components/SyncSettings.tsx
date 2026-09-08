@@ -8,6 +8,23 @@ export default function SyncSettings() {
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
   const [syncHistory, setSyncHistory] = useState<SyncTrigger[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [profileKey, setProfileKey] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    setProfileKey(localStorage.getItem("golf_buddy_profile_id"));
+  }, []);
+
+  const copyKey = async () => {
+    if (!profileKey) return;
+    try {
+      await navigator.clipboard.writeText(profileKey);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard blocked — user can still select the text */
+    }
+  };
 
   useEffect(() => {
     const updateStatus = () => {
@@ -202,6 +219,29 @@ export default function SyncSettings() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Profile key / recovery */}
+        {profileKey && (
+          <div className="border-t border-slate-200 pt-4">
+            <p className="font-medium text-slate-700 text-sm">Your profile key</p>
+            <p className="text-xs text-slate-500 mb-2">
+              Save this somewhere safe. It&apos;s the only way to get your rounds
+              back on a new device or after clearing your browser — there&apos;s
+              no login to fall back on.
+            </p>
+            <div className="flex gap-2">
+              <code className="flex-1 text-xs bg-slate-50 border border-slate-200 rounded px-2 py-2 break-all select-all">
+                {profileKey}
+              </code>
+              <button
+                onClick={copyKey}
+                className="text-sm px-3 rounded-lg border border-slate-300 hover:bg-slate-50 transition-colors whitespace-nowrap"
+              >
+                {copied ? "Copied" : "Copy"}
+              </button>
+            </div>
           </div>
         )}
 
