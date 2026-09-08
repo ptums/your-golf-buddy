@@ -11,9 +11,8 @@ demo screens). The only Golf Buddy-specific addition is an empty
 It now lives in the monorepo but is **not a pnpm workspace member** — React
 Native / Metro needs its own hoisted `node_modules`, so it keeps its own
 `package-lock.json` and is installed with `npm install` from this directory.
-The intent (from `../../docs/features.md` and `../../notes/08-16-2025.md`) is to
-port the web app's features into React Native and share `@ygb/shared` types with
-the web client.
+The intent (see `../../docs/features.md`) is to port the web app's features into
+React Native and share `@ygb/shared` types with the web client.
 
 ## Tech stack
 

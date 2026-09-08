@@ -13,7 +13,7 @@ apps/mobile/           Expo scaffold — NOT started, NOT a pnpm workspace membe
 services/profile-sync/ Hono + Workers + D1 + Drizzle. Cursor-based cloud sync.
 services/course-ls/    Hono + Workers. Golf-course typeahead wrapping Google Places + a 2-tier cache.
 packages/shared/       @ygb/shared — wire contracts (types + zod). Imported by web + both services.
-docs/  notes/          Architecture/deploy docs; dated dev journal.
+docs/                  Architecture / deploy / roadmap docs.
 ```
 
 ## Commands

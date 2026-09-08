@@ -17,8 +17,7 @@ services/
   course-ls/    Hono + Workers — nearby-course lookup (prototype, mock data)
 packages/
   shared/       @ygb/shared — the sync wire contract (types + zod schemas), shared by web and profile-sync
-docs/           Architecture, deployment, roadmap, working notes index
-notes/          Dated dev journal
+docs/           Architecture, deployment, roadmap
 ```
 
 | App                          | Status | Deploys as        |
@@ -110,7 +109,6 @@ Cloudflare. First-time Cloudflare account / D1 / secrets setup is in
 | [`docs/bugs.md`](./docs/bugs.md)         | Known bugs |
 | [`docs/setup.md`](./docs/setup.md)       | Pre-launch checklist (repo hardening, legal, IP) |
 | [`docs/prompts.md`](./docs/prompts.md)   | Design notes |
-| [`notes/`](./notes)                      | Dated working notes |
 
 ## Migration notes
 

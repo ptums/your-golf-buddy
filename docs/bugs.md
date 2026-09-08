@@ -3,7 +3,7 @@
 ## Web
 
 - Mobile: fix orange button component
-- Sync alert bug (see `notes/09-08-2025.md`)
+- Sync alert bug — the "sync complete" notification sometimes fires on a no-op sync
 
 ## PWA
 

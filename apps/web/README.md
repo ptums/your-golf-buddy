@@ -131,4 +131,4 @@ Tracked in [`../../docs/bugs.md`](../../docs/bugs.md):
 
 - Mobile: orange button component needs a fix
 - PWA: odd delete + home-list behavior
-- Sync alert bug (`../../notes/09-08-2025.md`)
+- Sync "complete" notification sometimes fires on a no-op sync
