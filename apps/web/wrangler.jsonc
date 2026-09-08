@@ -11,8 +11,7 @@
   "observability": {
     "enabled": true
   },
-  // Uncomment once the yourbuddy.golf zone is Active (see docs/custom-domain.md).
-  // "routes": [{ "pattern": "yourbuddy.golf", "custom_domain": true }]
+  "routes": [{ "pattern": "yourbuddy.golf", "custom_domain": true }],
   //
   // NEXT_PUBLIC_SYNC_ENDPOINT is a *build-time* value (inlined by `next build`),
   // not a Worker var — it is set in the deploy workflow's build job env / a
