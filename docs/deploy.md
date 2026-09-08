@@ -89,15 +89,33 @@ pnpm cf:kv:create
 Copy the printed `id` into `services/course-ls/wrangler.jsonc` (replace
 `REPLACE_WITH_KV_NAMESPACE_ID`) and commit.
 
-### 6. First deploy
+### 6. First deploy (by hand)
 
-CI will create the Workers on first run once `CLOUDFLARE_ACCOUNT_ID` is set. To
-do it by hand:
+Order matters: the web build bakes in the service URLs, so deploy the two
+Workers first, then point web at them.
 
 ```bash
-pnpm --filter profile-sync exec wrangler d1 migrations apply ygb-profile-sync --remote
-pnpm deploy        # loads .env, then turbo runs each service's deploy
+# 1. backend Workers
+pnpm cf:migrate            # apply D1 migrations to the remote database
+pnpm deploy:services       # deploys ygb-profile-sync + ygb-course-ls
 ```
+
+Each `wrangler deploy` prints the Worker's URL, e.g.
+`https://ygb-profile-sync.<subdomain>.workers.dev`.
+
+```bash
+# 2. put those URLs in .env, then re-sync and deploy web
+#    NEXT_PUBLIC_SYNC_ENDPOINT=https://ygb-profile-sync.<subdomain>.workers.dev/api
+#    NEXT_PUBLIC_COURSE_LS_ENDPOINT=https://ygb-course-ls.<subdomain>.workers.dev
+pnpm env:sync
+pnpm deploy:web            # opennext build + deploy → ygb-web
+```
+
+Also set the same two URLs as GitHub repo **variables** (step 2) so CI builds
+web with them too.
+
+`pnpm deploy` (no suffix) deploys all three at once — fine for later pushes once
+the URLs are stable, but use the split flow for the first deploy.
 
 ### 7. (Optional) import existing sync data
 
