@@ -56,6 +56,17 @@ describe("profile-sync", () => {
     expect(await res.json()).toEqual({ ok: true });
   });
 
+  it("serves the same routes with and without the /api prefix", async () => {
+    for (const path of ["/api/v1/health", "/v1/health"]) {
+      const res = await app.request(path, {}, env);
+      expect(res.status).toBe(200);
+    }
+    for (const path of ["/api/sync/state", "/sync/state"]) {
+      const res = await post(path, { cursors: {} });
+      expect(res.status).toBe(200);
+    }
+  });
+
   it("state is in sync when both sides are empty", async () => {
     const res = await post("/api/sync/state", { cursors: {} });
     expect(res.status).toBe(200);
