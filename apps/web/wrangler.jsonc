@@ -11,7 +11,10 @@
   "observability": {
     "enabled": true
   },
-  "routes": [{ "pattern": "yourbuddy.golf", "custom_domain": true }],
+  "routes": [
+    { "pattern": "web.yourbuddy.golf", "custom_domain": true },
+    { "pattern": "yourbuddy.golf", "custom_domain": true }
+  ],
   //
   // NEXT_PUBLIC_SYNC_ENDPOINT is a *build-time* value (inlined by `next build`),
   // not a Worker var — it is set in the deploy workflow's build job env / a

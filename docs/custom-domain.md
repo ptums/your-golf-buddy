@@ -2,9 +2,9 @@
 
 | Host | Worker |
 | ---- | ------ |
-| `yourbuddy.golf` | `ygb-web` (the app) |
-| `api.yourbuddy.golf` | `ygb-profile-sync` |
-| `courses.yourbuddy.golf` | `ygb-course-ls` |
+| `web.yourbuddy.golf` (and `yourbuddy.golf`) | `ygb-web` (the app) |
+| `profile-sync.yourbuddy.golf` | `ygb-profile-sync` |
+| `course-ls.yourbuddy.golf` | `ygb-course-ls` |
 
 The old `*.peter-686.workers.dev` URLs keep working — they're kept in the
 services' `CORS_ORIGINS` during the switch, and Workers stay reachable on both.
@@ -22,16 +22,9 @@ their own (`custom_domain: true` in each `wrangler.jsonc`).
 
 ## 2. Deploy the routes
 
-Once the zone is Active, the `routes` blocks in the three `wrangler.jsonc`
-files take effect on the next deploy:
-
-```bash
-pnpm deploy:services      # provisions api.yourbuddy.golf + courses.yourbuddy.golf
-pnpm deploy:web           # provisions yourbuddy.golf
-```
-
-(or just push to `main` and let the workflow do it.) Each `wrangler deploy`
-creates the DNS record + TLS cert for its hostname automatically.
+The `routes` blocks in the three `wrangler.jsonc` files are live as of the zone
+going Active — each `wrangler deploy` creates its hostname's DNS record + TLS
+cert automatically. Push to `main` (or `pnpm deploy:services` + `pnpm deploy:web`).
 
 ## 3. Point the web build at the new URLs
 
@@ -39,25 +32,26 @@ creates the DNS record + TLS cert for its hostname automatically.
 
 | Name | New value |
 | ---- | --------- |
-| `NEXT_PUBLIC_SYNC_ENDPOINT` | `https://api.yourbuddy.golf` |
-| `NEXT_PUBLIC_COURSE_LS_ENDPOINT` | `https://courses.yourbuddy.golf` |
+| `NEXT_PUBLIC_SYNC_ENDPOINT` | `https://profile-sync.yourbuddy.golf` |
+| `NEXT_PUBLIC_COURSE_LS_ENDPOINT` | `https://course-ls.yourbuddy.golf` |
 
 Then trigger a web deploy (push any change under `apps/web/`, or re-run the
 Deploy workflow) so the new endpoints are baked into the client bundle.
 
-Also update `apps/mobile/app.json` → `expo.extra.webUrl` to
-`https://yourbuddy.golf` and rebuild the app with EAS.
+`apps/mobile/app.json` → `expo.extra.webUrl` is `https://web.yourbuddy.golf`;
+rebuild the app with EAS after changing it.
 
 ## 4. Verify
 
 ```bash
-curl -sI https://yourbuddy.golf | head -1
-curl -s  https://api.yourbuddy.golf/v1/health          # {"ok":true}
-curl -s  "https://courses.yourbuddy.golf/courses/search?q=pebble+beach" | head -c 80
+curl -sI https://web.yourbuddy.golf | head -1
+curl -s  https://profile-sync.yourbuddy.golf/v1/health           # {"ok":true}
+curl -s  "https://course-ls.yourbuddy.golf/courses/search?q=pebble+beach" | head -c 80
 ```
 
-Open `https://yourbuddy.golf`, register/restore a profile, add a round, enable
-sync — confirm the network calls go to `api.yourbuddy.golf` and succeed.
+Open `https://web.yourbuddy.golf`, register/restore a profile, add a round,
+enable sync — confirm the network calls go to `profile-sync.yourbuddy.golf` and
+succeed. (`yourbuddy.golf` also serves the app.)
 
 ## 5. Tighten (after it's confirmed working)
 

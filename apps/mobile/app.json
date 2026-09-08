@@ -52,7 +52,7 @@
       "reactCompiler": true
     },
     "extra": {
-      "webUrl": "https://ygb-web.peter-686.workers.dev",
+      "webUrl": "https://web.yourbuddy.golf",
       "eas": {
         "projectId": "REPLACE_AFTER_EAS_INIT"
       }
