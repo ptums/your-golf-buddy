@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { db } from "../lib/db";
 import { useCourseSearch } from "../lib/use-course-search";
 
@@ -90,7 +91,7 @@ export default function NewCourseForm() {
 
   // no games → show "Add new course" form
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+    <div className="relative min-h-screen flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md flex flex-col">
         <label
           htmlFor="course"
@@ -165,6 +166,15 @@ export default function NewCourseForm() {
             18
           </button>
         </div>
+      </div>
+
+      <div className="absolute bottom-6 left-0 right-0 text-center">
+        <Link
+          href="/how-to"
+          className="text-sm text-slate-700 underline underline-offset-2 hover:text-slate-900"
+        >
+          How to use Your Golf Buddy
+        </Link>
       </div>
     </div>
   );
