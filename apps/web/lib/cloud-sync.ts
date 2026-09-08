@@ -1,45 +1,28 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { profileDB } from "./profile-db";
 import { db } from "./db";
+import type {
+  SyncCursors,
+  SyncStatus,
+  SyncStateResponse,
+  SyncPushResponse,
+} from "@ygb/shared";
 
-export interface SyncStatus {
-  lastSync: string | null;
-  isEnabled: boolean;
-  isSyncing: boolean;
-  lastError: string | null;
-  nextSyncTime: string | null;
-}
+// The canonical wire contract lives in @ygb/shared and is shared with the
+// profile-sync service. Re-exported here so existing `@/lib/cloud-sync`
+// imports across the app keep resolving.
+export type {
+  SyncCursors,
+  SyncStatus,
+  SyncStateResponse,
+  SyncPushResponse,
+} from "@ygb/shared";
 
-export interface SyncCursors {
-  profiles?: string | null;
-  courses?: string | null;
-  games?: string | null;
-  scores?: string | null;
-}
-
-export interface SyncStateResponse {
-  inSync: boolean;
-  serverCursors?: SyncCursors;
-  counts?: {
-    profiles: number;
-    courses: number;
-    games: number;
-    scores: number;
-  };
-}
-
-export interface SyncPushResponse {
-  status: string;
-  saved: {
-    profiles: number;
-    courses: number;
-    games: number;
-    scores: number;
-  };
-  serverCursors: SyncCursors;
-}
-
-export interface SyncPullResponse {
+// Local shapes where the browser client is deliberately loose: `SyncData`
+// still holds pre-serialization values, and `applyChanges` writes raw server
+// rows into Dexie's numeric keyspace.
+// TODO(sync): reconcile these with the @ygb/shared server-row types.
+interface SyncPullResponse {
   changes: {
     profiles: any[];
     courses: any[];
@@ -49,7 +32,7 @@ export interface SyncPullResponse {
   serverCursors: SyncCursors;
 }
 
-export interface SyncData {
+interface SyncData {
   profiles: any[];
   courses: any[];
   games: any[];
