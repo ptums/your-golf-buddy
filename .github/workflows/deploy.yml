@@ -11,14 +11,33 @@ concurrency:
 
 env:
   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-  # Account ID is not secret; kept as a repo variable so it can also gate the
-  # jobs below (deploys are skipped until it is set — see docs/deploy.md).
-  CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+  # Account ID may be a repo variable or a secret — either works.
+  CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
 
 jobs:
-  changes:
+  # Skips the whole deploy (green, not red) until Cloudflare creds exist.
+  # Runs in a step so it can see `secrets`, which job-level `if:` cannot.
+  preflight:
     runs-on: ubuntu-latest
-    if: vars.CLOUDFLARE_ACCOUNT_ID != ''
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+    steps:
+      - id: check
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ACCT: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -n "$TOKEN" ] && [ -n "$ACCT" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID not set — skipping deploy. See docs/deploy.md"
+          fi
+
+  changes:
+    needs: preflight
+    if: needs.preflight.outputs.configured == 'true'
+    runs-on: ubuntu-latest
     outputs:
       web: ${{ steps.filter.outputs.web }}
       profile-sync: ${{ steps.filter.outputs.profile-sync }}
@@ -94,9 +113,8 @@ jobs:
       - name: Build (OpenNext)
         run: pnpm --filter web exec opennextjs-cloudflare build
         env:
-          # Public URLs, inlined into the client bundle. Set as repo variables
-          # (Settings -> Secrets and variables -> Actions -> Variables).
-          NEXT_PUBLIC_SYNC_ENDPOINT: ${{ vars.NEXT_PUBLIC_SYNC_ENDPOINT }}
-          NEXT_PUBLIC_COURSE_LS_ENDPOINT: ${{ vars.NEXT_PUBLIC_COURSE_LS_ENDPOINT }}
+          # Public URLs, inlined into the client bundle. Repo variable or secret.
+          NEXT_PUBLIC_SYNC_ENDPOINT: ${{ vars.NEXT_PUBLIC_SYNC_ENDPOINT || secrets.NEXT_PUBLIC_SYNC_ENDPOINT }}
+          NEXT_PUBLIC_COURSE_LS_ENDPOINT: ${{ vars.NEXT_PUBLIC_COURSE_LS_ENDPOINT || secrets.NEXT_PUBLIC_COURSE_LS_ENDPOINT }}
       - name: Deploy
         run: pnpm --filter web exec opennextjs-cloudflare deploy
