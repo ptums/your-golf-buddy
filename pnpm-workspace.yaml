@@ -1,0 +1,7 @@
+# apps/mobile is intentionally NOT a workspace member — React Native / Metro
+# needs its own hoisted node_modules, so it keeps its own package-lock.json
+# and is installed with `npm install` from inside apps/mobile.
+packages:
+  - "apps/web"
+  - "services/*"
+  - "packages/*"

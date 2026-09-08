@@ -1,0 +1,23 @@
+{
+  "name": "your-golf-buddy",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Your Golf Buddy monorepo — offline-first golf score tracking (web PWA), a cloud sync service, a course-location service, and a mobile client.",
+  "packageManager": "pnpm@10.34.1",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "deploy": "turbo run deploy",
+    "clean": "turbo run clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.5",
+    "typescript": "^5.9.2"
+  }
+}
