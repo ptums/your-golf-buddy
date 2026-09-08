@@ -36,8 +36,11 @@ scopes every read and write to it. No accounts, no passwords.
 The trade-offs of the capability model:
 
 - If the UUID leaks (a shared device, a screenshot, logs), that data is exposed.
-- There's no recovery: lose the UUID and the server data is unreachable. The web
-  app should let the user view and re-enter their profile key.
+- **Recovery is the user's job.** Settings → Cloud Sync shows the profile key
+  with a Copy button; `/profile-registration` has a "Restore with your profile
+  key" flow that adopts a pasted UUID and pulls the data down (pull-only, so a
+  wrong key leaves nothing behind). If the user never saved the key and clears
+  their browser, the server data is unreachable.
 - `POST /sync/delete` hard-removes all server rows for the token.
 
 ## If real accounts are ever needed

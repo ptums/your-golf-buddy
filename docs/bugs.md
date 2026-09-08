@@ -38,5 +38,6 @@ Sync was completely non-functional — nothing ever reached the server.
   True multi-device needs the server UUID as the canonical local key.
 - `collectSyncData()` sends whole tables on every push rather than a delta —
   fine for one user, wasteful at scale.
-- Restore after clearing browser data loses the anonymous profile UUID, so the
-  server data (scoped by the old `profile_id`) can't be re-attached.
+- Recovery depends on the user saving their profile key (Settings shows it, and
+  `/profile-registration` has a restore flow). Nothing recovers the data if they
+  never copied the key — there's no email/password fallback by design.
