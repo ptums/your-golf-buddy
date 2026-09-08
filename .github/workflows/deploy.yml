@@ -11,11 +11,14 @@ concurrency:
 
 env:
   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  # Account ID is not secret; kept as a repo variable so it can also gate the
+  # jobs below (deploys are skipped until it is set — see docs/deploy.md).
+  CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
 
 jobs:
   changes:
     runs-on: ubuntu-latest
+    if: vars.CLOUDFLARE_ACCOUNT_ID != ''
     outputs:
       web: ${{ steps.filter.outputs.web }}
       profile-sync: ${{ steps.filter.outputs.profile-sync }}

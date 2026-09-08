@@ -30,11 +30,13 @@ Create a token at **dash.cloudflare.com → My Profile → API Tokens** with:
 | Kind     | Name                        | Value                                        |
 | -------- | --------------------------- | ------------------------------------------- |
 | Secret   | `CLOUDFLARE_API_TOKEN`      | the token from step 1                        |
-| Secret   | `CLOUDFLARE_ACCOUNT_ID`     | dashboard → any domain → Account ID          |
+| Variable | `CLOUDFLARE_ACCOUNT_ID`     | dashboard → any domain → Account ID          |
 | Variable | `NEXT_PUBLIC_SYNC_ENDPOINT` | `https://ygb-profile-sync.<subdomain>.workers.dev/api` (or your custom domain + `/api`) |
 
 `NEXT_PUBLIC_SYNC_ENDPOINT` is a **build-time** value inlined into the web
-client bundle — it is a repo *variable*, not a secret.
+client bundle. `CLOUDFLARE_ACCOUNT_ID` is not secret and is kept as a variable
+so it can gate the deploy workflow — **the deploy jobs are skipped entirely
+until `CLOUDFLARE_ACCOUNT_ID` is set**, so CI stays green before setup is done.
 
 ### 3. Create the D1 database
 
