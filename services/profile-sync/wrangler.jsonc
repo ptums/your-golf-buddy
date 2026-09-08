@@ -7,9 +7,12 @@
   "observability": {
     "enabled": true
   },
+  // Uncomment once the yourbuddy.golf zone is Active (see docs/custom-domain.md).
+  // "routes": [{ "pattern": "api.yourbuddy.golf", "custom_domain": true }],
   "vars": {
-    // Comma-separated allowed CORS origins, or "*" for any.
-    "CORS_ORIGINS": "*"
+    // Browsers allowed to call this API. Drop the *.workers.dev entry once the
+    // app is fully on yourbuddy.golf.
+    "CORS_ORIGINS": "https://yourbuddy.golf,https://www.yourbuddy.golf,https://ygb-web.peter-686.workers.dev,http://localhost:3002"
   },
   "d1_databases": [
     {

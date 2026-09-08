@@ -6,6 +6,7 @@ import SyncManagerInitializer from "@/components/SyncManagerInitializer";
 import SyncNotification from "@/components/SyncNotification";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://yourbuddy.golf"),
   title: "Your Golf Buddy",
   description: "Golf score tracking and notes app",
   manifest: "/manifest.json",

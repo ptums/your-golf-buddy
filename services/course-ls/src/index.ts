@@ -7,7 +7,18 @@ import { cacheKey, parseSearchParams, type SearchParams } from "./normalize";
 
 const app = new Hono<{ Bindings: Env }>();
 
-app.use("*", cors());
+app.use("*", (c, next) => {
+  const configured = (c.env.CORS_ORIGINS ?? "*")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return cors({
+    origin: configured.includes("*") ? "*" : configured,
+    allowMethods: ["GET", "OPTIONS"],
+    allowHeaders: ["Content-Type"],
+    maxAge: 86400,
+  })(c, next);
+});
 
 app.get("/health", (c) =>
   c.json({

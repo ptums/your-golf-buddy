@@ -7,6 +7,12 @@
   "observability": {
     "enabled": true
   },
+  // Uncomment once the yourbuddy.golf zone is Active (see docs/custom-domain.md).
+  // "routes": [{ "pattern": "courses.yourbuddy.golf", "custom_domain": true }],
+  "vars": {
+    // Browsers allowed to call this API. curl / server-to-server is unaffected.
+    "CORS_ORIGINS": "https://yourbuddy.golf,https://www.yourbuddy.golf,https://ygb-web.peter-686.workers.dev,http://localhost:3002"
+  },
   "kv_namespaces": [
     {
       "binding": "COURSE_CACHE",
