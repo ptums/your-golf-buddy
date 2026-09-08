@@ -3,7 +3,6 @@
 ## Web
 
 - Mobile: fix orange button component
-- Sync alert bug — the "sync complete" notification sometimes fires on a no-op sync
 
 ## PWA
 
@@ -13,17 +12,31 @@
 
 _(not started)_
 
-## Sync contract (web ⇄ profile-sync)
+## Sync (web ⇄ profile-sync)
 
-Carried over from the Laravel version — **not** regressions from the TypeScript
-rewrite. The rewrite matches the previous behaviour on purpose.
+### Fixed (Sept 2026)
 
-- `apps/web/lib/cloud-sync.ts` `applyChanges()` calls `db.courses.bulkPut()` with
-  raw server rows: string UUID `id` into Dexie's numeric autoincrement keyspace,
-  snake_case fields the local schema doesn't use. Pulled rows don't merge cleanly
-  into local state.
-- The client never sends its cursors up on the very first sync, and
-  `collectSyncData()` sends whole tables every push rather than a delta.
-- Fixing these means normalising the client ⇄ server shape (the `@ygb/shared`
-  zod schemas are the place to do it) and teaching `applyChanges` to reconcile
-  by `external_id`.
+Sync was completely non-functional — nothing ever reached the server.
+
+- `performSync()` short-circuited on `/sync/state` returning `{inSync:true}`. A
+  cursor-only comparison reports "in sync" whenever both sides look empty, so a
+  client with local data and null cursors never pushed. Now it always pushes
+  (idempotent upserts) then pulls.
+- The "Sync completed" toast was stuck on — `golf_buddy_sync_status` stayed
+  `"success"` and `SyncNotification` re-showed it every 2 s poll. Now it fires
+  once per sync via a `golf_buddy_last_success` timestamp.
+- `applyChanges()` did `db.courses.bulkPut(serverRows)` — UUID ids + snake_case
+  into Dexie's numeric keyspace. Rewritten to map server rows to the local
+  shape, keyed by `external_id` → local numeric id, with tombstone deletes.
+- `/sync/pull` now includes `course_external_id` on games and
+  `game_external_id` on scores so the client can resolve local ids.
+
+### Still weak (needs a deliberate design pass, not urgent)
+
+- Local Dexie `++id` autoincrement ids are not globally unique, so a *new* row
+  created on device B can collide with an existing id on device A when pulled.
+  True multi-device needs the server UUID as the canonical local key.
+- `collectSyncData()` sends whole tables on every push rather than a delta —
+  fine for one user, wasteful at scale.
+- Restore after clearing browser data loses the anonymous profile UUID, so the
+  server data (scoped by the old `profile_id`) can't be re-attached.

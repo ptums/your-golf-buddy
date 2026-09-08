@@ -62,11 +62,12 @@ Node 22, pnpm 10. `apps/mobile` uses its own `npm install` (not the workspace).
 
 ## Landmines / non-obvious things
 
-- **`apps/web/lib/cloud-sync.ts` `applyChanges()` is known-buggy** (writes server
-  UUID rows into Dexie's numeric keyspace; pushes whole tables not deltas). This
-  was carried over from the old Laravel service on purpose. Don't "fix" it as a
-  side quest — it's tracked in `docs/bugs.md` and needs a deliberate contract
-  migration.
+- **Sync** (`apps/web/lib/cloud-sync.ts`): `performSync` always pushes then pulls
+  — do NOT re-add a `/sync/state` `{inSync}` short-circuit (it can't see unpushed
+  local data). `applyChanges` maps server rows → local Dexie shape by
+  `external_id` → local numeric id. Remaining weaknesses (cross-device id
+  collisions, whole-table pushes) are in `docs/bugs.md` — a deliberate design
+  pass, not a side quest.
 - **`profile-sync` push writes are sequential, not one atomic D1 batch.**
   Intentional — payloads are tiny and the client only advances its cursor on full
   success. Drizzle's `db.batch()` tuple typing made it not worth it.

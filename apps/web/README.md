@@ -131,4 +131,4 @@ Tracked in [`../../docs/bugs.md`](../../docs/bugs.md):
 
 - Mobile: orange button component needs a fix
 - PWA: odd delete + home-list behavior
-- Sync "complete" notification sometimes fires on a no-op sync
+- Multi-device sync has id-collision edge cases (`docs/bugs.md`)
