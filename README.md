@@ -61,6 +61,8 @@ Requires Node 22 and pnpm 10 (`corepack enable` or install pnpm directly).
 
 ```bash
 pnpm install
+cp .env.example .env            # one config file: Cloudflare + Google keys + service URLs
+pnpm env:sync                   # fans .env out to apps/web/.env.local + services/course-ls/.dev.vars
 
 pnpm dev                       # turbo: runs every package's dev task
 pnpm --filter web dev          # just the web app        (:3002)
@@ -70,13 +72,13 @@ pnpm --filter course-ls dev    # just course-ls          (:8787, wrangler dev)
 pnpm turbo run typecheck lint test build   # what CI runs
 ```
 
-To run web against a local sync service:
+To run web against local services:
 
 ```bash
 pnpm --filter profile-sync exec wrangler d1 migrations apply ygb-profile-sync --local
-pnpm --filter profile-sync dev
-# in another shell — endpoint is a build-time var:
-NEXT_PUBLIC_SYNC_ENDPOINT=http://localhost:8787/api pnpm --filter web dev
+pnpm --filter profile-sync dev            # :8787
+pnpm --filter course-ls dev -- --port 8788
+pnpm --filter web dev                     # reads apps/web/.env.local from `pnpm env:sync`
 ```
 
 `apps/mobile` is **not** in the pnpm workspace (React Native / Metro needs its

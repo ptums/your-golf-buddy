@@ -40,14 +40,12 @@ pnpm --filter web dev          # http://localhost:3002 (next dev, Turbopack)
 
 ## Configuration
 
-`NEXT_PUBLIC_SYNC_ENDPOINT` is **inlined at build time** (`next build`), not read
-at runtime. Locally, copy `env.example` to `.env.local`. In CI the deploy
-workflow sets it from a repo variable before building.
+`NEXT_PUBLIC_SYNC_ENDPOINT` and `NEXT_PUBLIC_COURSE_LS_ENDPOINT` are **inlined at
+build time** (`next build`), not read at runtime.
 
-```bash
-# Base URL of the profile-sync service. cloud-sync.ts appends /sync/*.
-NEXT_PUBLIC_SYNC_ENDPOINT=http://localhost:8787/api   # local profile-sync (wrangler dev)
-```
+Locally they come from `apps/web/.env.local`, which is **generated** — edit the
+repo-root `.env` (see `../../.env.example`) and run `pnpm env:sync`. In CI the
+deploy workflow sets them from repo variables before building.
 
 ## How it works
 

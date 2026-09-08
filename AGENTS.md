@@ -20,6 +20,7 @@ docs/  notes/          Architecture/deploy docs; dated dev journal.
 
 ```bash
 pnpm install
+cp .env.example .env && pnpm env:sync        # one config file → apps/web/.env.local + services/course-ls/.dev.vars
 pnpm turbo run typecheck lint test build     # everything CI runs — run before you finish
 pnpm --filter web dev                        # :3002
 pnpm --filter profile-sync dev               # :8787  (wrangler dev)
@@ -50,7 +51,11 @@ Node 22, pnpm 10. `apps/mobile` uses its own `npm install` (not the workspace).
   `wrangler.jsonc`. Augment the `Env` type in a `*.d.ts` (see
   `services/course-ls/src/worker-env.d.ts`).
 - `NEXT_PUBLIC_*` values are **build-time** in Next — set via the deploy
-  workflow's build env or a local `.env`, not `wrangler.jsonc` vars.
+  workflow's build env or `apps/web/.env.local`, not `wrangler.jsonc` vars.
+- **One config file: repo-root `.env`** (gitignored). `pnpm env:sync` generates
+  `apps/web/.env.local` and `services/course-ls/.dev.vars` from it — those are
+  generated, don't hand-edit or commit them. `scripts/with-env.sh` loads `.env`
+  for the `pnpm deploy` / `pnpm cf:*` scripts.
 - Commit style: conventional prefixes (`feat(web):`, `fix(profile-sync):`, …).
   End commit messages with the `Co-Authored-By` / `Claude-Session` trailers the
   session specifies.

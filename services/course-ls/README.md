@@ -82,7 +82,8 @@ case; a Durable Object could dedupe if it ever matters.
 ## Develop
 
 ```bash
-cp .dev.vars.example .dev.vars   # add a Google Places API key
+# from the repo root: put GOOGLE_MAPS_API_KEY in .env, then
+pnpm env:sync                    # writes services/course-ls/.dev.vars
 pnpm --filter course-ls dev      # wrangler dev on :8787
 pnpm --filter course-ls test
 ```
@@ -98,8 +99,8 @@ web form falls back to free-text entry.
 
 Needs two things set up once (see [`docs/deploy.md`](../../docs/deploy.md)):
 
-1. `wrangler kv namespace create COURSE_CACHE` → paste the id into `wrangler.jsonc`
-2. `wrangler secret put GOOGLE_MAPS_API_KEY`
+1. `pnpm cf:kv:create` → paste the printed id into `wrangler.jsonc`
+2. `pnpm cf:secret:google` → paste your Google Places key
 
 Then GitHub Actions runs `wrangler deploy` on every push to `main` touching this
 service.

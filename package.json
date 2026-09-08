@@ -13,8 +13,12 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
-    "deploy": "turbo run deploy",
-    "clean": "turbo run clean && rm -rf node_modules"
+    "deploy": "./scripts/with-env.sh turbo run deploy",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "env:sync": "node scripts/sync-env.mjs",
+    "cf:d1:create": "./scripts/with-env.sh pnpm --filter profile-sync exec wrangler d1 create ygb-profile-sync",
+    "cf:kv:create": "./scripts/with-env.sh pnpm --filter course-ls exec wrangler kv namespace create COURSE_CACHE",
+    "cf:secret:google": "./scripts/with-env.sh pnpm --filter course-ls exec wrangler secret put GOOGLE_MAPS_API_KEY"
   },
   "devDependencies": {
     "turbo": "^2.5.5",
