@@ -139,7 +139,7 @@ from the web client than to script an import.
 pnpm env:sync
 pnpm --filter profile-sync exec wrangler d1 migrations apply ygb-profile-sync --local
 pnpm --filter profile-sync dev      # :8787
-pnpm --filter course-ls dev         # :8787 (use --port 8788 to run both)
+pnpm --filter course-ls dev         # :8788
 pnpm --filter web dev               # :3002
 pnpm --filter web preview           # opennext build on the Workers runtime
 ```

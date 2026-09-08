@@ -67,7 +67,7 @@ pnpm env:sync                   # fans .env out to apps/web/.env.local + service
 pnpm dev                       # turbo: runs every package's dev task
 pnpm --filter web dev          # just the web app        (:3002)
 pnpm --filter profile-sync dev # just the sync service   (:8787, wrangler dev)
-pnpm --filter course-ls dev    # just course-ls          (:8787, wrangler dev)
+pnpm --filter course-ls dev    # just course-ls          (:8788, wrangler dev)
 
 pnpm turbo run typecheck lint test build   # what CI runs
 ```
@@ -77,7 +77,7 @@ To run web against local services:
 ```bash
 pnpm --filter profile-sync exec wrangler d1 migrations apply ygb-profile-sync --local
 pnpm --filter profile-sync dev            # :8787
-pnpm --filter course-ls dev -- --port 8788
+pnpm --filter course-ls dev               # :8788
 pnpm --filter web dev                     # reads apps/web/.env.local from `pnpm env:sync`
 ```
 

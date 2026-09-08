@@ -84,12 +84,12 @@ case; a Durable Object could dedupe if it ever matters.
 ```bash
 # from the repo root: put GOOGLE_MAPS_API_KEY in .env, then
 pnpm env:sync                    # writes services/course-ls/.dev.vars
-pnpm --filter course-ls dev      # wrangler dev on :8787
+pnpm --filter course-ls dev      # wrangler dev on :8788
 pnpm --filter course-ls test
 ```
 
 ```bash
-curl "http://localhost:8787/courses/search?q=pebble%20beach&lat=36.57&lng=-121.95"
+curl "http://localhost:8788/courses/search?q=pebble%20beach&lat=36.57&lng=-121.95"
 ```
 
 Without a key the service still runs — `/courses/search` returns `503` and the

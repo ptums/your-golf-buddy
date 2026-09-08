@@ -24,7 +24,7 @@ cp .env.example .env && pnpm env:sync        # one config file → apps/web/.env
 pnpm turbo run typecheck lint test build     # everything CI runs — run before you finish
 pnpm --filter web dev                        # :3002
 pnpm --filter profile-sync dev               # :8787  (wrangler dev)
-pnpm --filter course-ls dev                  # :8787  (wrangler dev)
+pnpm --filter course-ls dev                  # :8788  (wrangler dev)
 pnpm --filter profile-sync test              # vitest, Workers pool
 pnpm --filter <svc> cf-typegen               # regenerate worker-configuration.d.ts after editing wrangler.jsonc
 ```
