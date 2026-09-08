@@ -55,30 +55,39 @@ Each app has its own README with detail. AI agents: see [`AGENTS.md`](./AGENTS.m
   timestamps, soft deletes, `max(updated_at, deleted_at)` cursors per table.
 - **course-ls** is a separate concern and not yet integrated.
 
-## Develop
+## Run it locally
 
-Requires Node 22 and pnpm 10 (`corepack enable` or install pnpm directly).
+Requires Node 22 and pnpm 10 (`corepack enable`, or install pnpm directly).
 
 ```bash
 pnpm install
-cp .env.example .env            # one config file: Cloudflare + Google keys + service URLs
-pnpm env:sync                   # fans .env out to apps/web/.env.local + services/course-ls/.dev.vars
 
-pnpm dev                       # turbo: runs every package's dev task
-pnpm --filter web dev          # just the web app        (:3002)
-pnpm --filter profile-sync dev # just the sync service   (:8787, wrangler dev)
-pnpm --filter course-ls dev    # just course-ls          (:8788, wrangler dev)
+# one-time config
+cp .env.example .env      # for local dev you only need GOOGLE_MAPS_API_KEY (optional)
+                          # and the two NEXT_PUBLIC_* URLs at their localhost defaults.
+                          # CLOUDFLARE_* are only needed to deploy.
+pnpm env:sync             # writes apps/web/.env.local + services/course-ls/.dev.vars
 
-pnpm turbo run typecheck lint test build   # what CI runs
+# one-time: create the local D1 schema
+pnpm --filter profile-sync exec wrangler d1 migrations apply ygb-profile-sync --local
+
+# run everything
+pnpm dev
 ```
 
-To run web against local services:
+`pnpm dev` starts all three: **web on http://localhost:3002**, profile-sync on
+`:8787`, course-ls on `:8788`. Open the web URL.
+
+- The web app is **offline-first** — it works with nothing else running; data
+  lives in your browser's IndexedDB. Cloud sync is opt-in under **Settings**;
+  when enabled it talks to the local profile-sync.
+- The **course typeahead** needs `GOOGLE_MAPS_API_KEY` in `.env`
+  (`pnpm env:sync` again after editing). Without it the course field is plain text.
+- Just the web app: `pnpm --filter web dev`. Just one service:
+  `pnpm --filter profile-sync dev` / `pnpm --filter course-ls dev`.
 
 ```bash
-pnpm --filter profile-sync exec wrangler d1 migrations apply ygb-profile-sync --local
-pnpm --filter profile-sync dev            # :8787
-pnpm --filter course-ls dev               # :8788
-pnpm --filter web dev                     # reads apps/web/.env.local from `pnpm env:sync`
+pnpm turbo run typecheck lint test build   # what CI runs
 ```
 
 `apps/mobile` is **not** in the pnpm workspace (React Native / Metro needs its
