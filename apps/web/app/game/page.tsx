@@ -217,14 +217,17 @@ function GameContent() {
 
       {/* Scorecard strip */}
       {cardOpen && (
-        <div className="mb-[2px] border-b-[1.5px] border-[var(--bs-ink)] pt-3">
-          <div className="flex items-stretch overflow-hidden pb-2">
-            <div className="flex w-11 flex-none flex-col justify-between pl-5">
-              <span className="bs-rail py-[5px]">Hole</span>
-              <span className="bs-rail py-[5px]">Par</span>
-              <span className="bs-rail py-[9px]">You</span>
+        <div className="mb-[2px] border-b-[1.5px] border-[var(--bs-ink)] pt-4">
+          <div className="flex pb-3">
+            <div className="w-12 flex-none pl-5">
+              <div className="flex h-[30px] items-center bs-rail">Hole</div>
+              <div className="flex h-[28px] items-center bs-rail">Par</div>
+              <div className="flex h-[46px] items-center bs-rail">You</div>
             </div>
-            <div ref={stripRef} className="flex flex-1 gap-[2px] overflow-x-auto">
+            <div
+              ref={stripRef}
+              className="flex flex-1 gap-[2px] overflow-x-auto overscroll-x-contain"
+            >
               {entries.map((e, i) => {
                 const isCurrent = i === current;
                 const beyond = i > Math.max(thru, current);
@@ -239,7 +242,7 @@ function GameContent() {
                     aria-label={`Edit hole ${i + 1}`}
                   >
                     <div
-                      className="py-[5px] text-[13px]"
+                      className="flex h-[30px] items-center justify-center text-[13px]"
                       style={
                         isCurrent
                           ? { color: "var(--bs-state)", fontWeight: 600 }
@@ -249,22 +252,34 @@ function GameContent() {
                       {i + 1}
                     </div>
                     <div
-                      className="py-[5px] text-[13px]"
-                      style={{ color: isCurrent ? "var(--bs-state)" : "var(--color-n800)" }}
+                      className="flex h-[28px] items-center justify-center text-[13px]"
+                      style={{
+                        color: isCurrent ? "var(--bs-state)" : "var(--color-n800)",
+                      }}
                     >
                       {e.par || "·"}
                     </div>
                     <div
-                      className="py-[9px] font-serif text-[21px] font-semibold leading-none"
+                      className="flex h-[46px] items-center justify-center font-serif text-[21px] font-semibold leading-none"
                       style={
                         isCurrent
-                          ? { background: "var(--bs-ink)", color: "var(--bs-bg)" }
+                          ? {
+                              background: "var(--bs-ink)",
+                              color: "var(--bs-bg)",
+                              boxShadow: "inset 0 3px 0 var(--bs-state)",
+                            }
                           : s > 0
                             ? undefined
                             : { color: "var(--color-n500)" }
                       }
                     >
-                      {s > 0 ? s : isCurrent ? "—" : "·"}
+                      {s > 0 ? (
+                        s
+                      ) : isCurrent ? (
+                        <span style={{ opacity: 0.55 }}>–</span>
+                      ) : (
+                        "·"
+                      )}
                     </div>
                   </button>
                 );
