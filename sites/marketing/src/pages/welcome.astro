@@ -17,10 +17,10 @@ import { APP_URL, API_URL, CONTACT_EMAIL, PASS_ENABLED } from "../data/site";
     {
       !PASS_ENABLED ? (
         <div>
-          <h1 class="text-3xl font-bold text-slate-900">Nothing here yet</h1>
-          <p class="mt-3 text-slate-600">
+          <h1 class="text-[42px] leading-[0.95]">Nothing here yet</h1>
+          <p class="mt-3 text-[16px] text-[var(--color-n800)]">
             The Golf Buddy Pass isn't on sale yet.{" "}
-            <a class="underline hover:text-slate-900" href="/">
+            <a class="underline" href="/">
               Back home
             </a>
             .
@@ -28,31 +28,31 @@ import { APP_URL, API_URL, CONTACT_EMAIL, PASS_ENABLED } from "../data/site";
         </div>
       ) : (
         <div>
-          <h1 class="text-3xl font-bold text-slate-900">Thanks — you're set</h1>
-          <p class="mt-3 text-slate-600">
+          <h1 class="text-[42px] leading-[0.95]">Thanks — you're set</h1>
+          <p class="mt-3 text-[16px] text-[var(--color-n800)]">
             Your Golf Buddy Pass unlocks cloud sync across all your devices.
             Here's your key and how to use it.
           </p>
 
           <div
             id="key-box"
-            class="mt-8 rounded-xl border border-dashed border-amber-300 bg-amber-50 p-5 text-sm text-amber-900"
+            class="mt-8 border-[1.5px] border-dashed border-[var(--color-ink)] p-5 text-[14px]"
           >
-            <p class="font-semibold">Your pass key</p>
-            <p id="key-status" class="mt-1">Checking your purchase…</p>
+            <p class="bs-rail bs-rail-ink">Your pass key</p>
+            <p id="key-status" class="mt-2">Checking your purchase…</p>
             <div id="key-wrap" class="mt-2 hidden gap-2">
               <code
                 id="key-value"
-                class="flex-1 rounded border border-amber-300 bg-white px-2 py-2 break-all select-all"
+                class="flex-1 select-all break-all border-[1.5px] border-[var(--color-ink)] bg-[var(--color-surface)] px-2 py-2 font-serif"
               />
               <button
                 id="key-copy"
-                class="rounded-lg border border-amber-300 px-3 text-sm whitespace-nowrap hover:bg-white"
+                class="bs-key !px-3 !py-2 text-[13px] whitespace-nowrap"
               >
                 Copy
               </button>
             </div>
-            <p id="key-fallback" class="mt-1 hidden">
+            <p id="key-fallback" class="mt-2 hidden">
               Couldn't confirm it automatically — email{" "}
               <a class="underline" href={`mailto:${CONTACT_EMAIL}`}>
                 {CONTACT_EMAIL}
@@ -63,35 +63,36 @@ import { APP_URL, API_URL, CONTACT_EMAIL, PASS_ENABLED } from "../data/site";
           </div>
 
           <ol class="mt-8 space-y-4">
-            <li class="rounded-xl border border-amber-200 bg-white/70 p-5">
-              <p class="font-semibold text-slate-900">1. Open Your Golf Buddy</p>
-              <p class="mt-1 text-sm text-slate-600">
-                On the device you play with.{" "}
-                <a class="underline hover:text-slate-900" href={APP_URL}>
-                  {APP_URL.replace("https://", "")}
-                </a>
-              </p>
-            </li>
-            <li class="rounded-xl border border-amber-200 bg-white/70 p-5">
-              <p class="font-semibold text-slate-900">
-                2. Settings → Golf Buddy Pass
-              </p>
-              <p class="mt-1 text-sm text-slate-600">
-                Paste the key above into the field and save.
-              </p>
-            </li>
-            <li class="rounded-xl border border-amber-200 bg-white/70 p-5">
-              <p class="font-semibold text-slate-900">3. Turn on sync</p>
-              <p class="mt-1 text-sm text-slate-600">
-                Flip the sync switch. Your rounds back up right away and stay in
-                step on every device where you enter the same key.
-              </p>
-            </li>
+            {[
+              ["Open Your Golf Buddy", null],
+              ["Settings → Golf Buddy Pass", "Paste the key above into the field and save."],
+              [
+                "Turn on sync",
+                "Flip the sync switch. Your rounds back up right away and stay in step on every device where you enter the same key.",
+              ],
+            ].map(([h, b], i) => (
+              <li class="bs-box p-5">
+                <div class="flex items-center gap-[10px]">
+                  <span class="font-serif text-[20px] font-semibold">{i + 1}</span>
+                  <p class="font-serif text-[17px] font-semibold">{h}</p>
+                </div>
+                <p class="mt-1 text-[14px] text-[var(--color-n800)]">
+                  {b ?? (
+                    <>
+                      On the device you play with.{" "}
+                      <a class="underline" href={APP_URL}>
+                        {APP_URL.replace("https://", "")}
+                      </a>
+                    </>
+                  )}
+                </p>
+              </li>
+            ))}
           </ol>
 
-          <p class="mt-8 text-sm text-slate-600">
+          <p class="mt-8 text-[14px] text-[var(--color-n800)]">
             Stuck? Email{" "}
-            <a class="underline hover:text-slate-900" href={`mailto:${CONTACT_EMAIL}`}>
+            <a class="underline" href={`mailto:${CONTACT_EMAIL}`}>
               {CONTACT_EMAIL}
             </a>{" "}
             and we'll sort it out.

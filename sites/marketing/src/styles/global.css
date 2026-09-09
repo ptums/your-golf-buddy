@@ -1,19 +1,188 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-/* Brand tokens — mirror apps/web (Tailwind v4, amber ground + orange accent). */
+/* ─────────────────────────────────────────────────────────────────────────
+   Broadsheet — newsprint set for the web. Shared with apps/web: ink on paper,
+   no dark mode, Source Serif 4, controls are "keys" with a 1.5px ink edge,
+   rules only in the header/footer furniture.
+   ──────────────────────────────────────────────────────────────────────── */
+
+@font-face {
+  font-family: "Source Serif 4";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/source-serif-4.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Source Serif 4";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/source-serif-4-italic.woff2") format("woff2");
+}
+
 @theme {
-  --color-brand: #f97316;
-  --color-brand-dark: #ea580c;
-  --color-ground: #fffbeb;
+  --color-paper: #f3f2f2;
+  --color-surface: #eae9e9;
+  --color-ink: #201e1d;
+  --color-cyan: #0088b0;
+  --color-magenta: #d6006c;
+  --color-magenta-ink: #aa0b56;
+  --color-n300: #d7d3d3;
+  --color-n400: #bab6b6;
+  --color-n500: #9b9797;
+  --color-n800: #444141;
+
+  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+
+  /* prose (privacy / terms) — ink on paper */
+  --tw-prose-body: #201e1d;
+  --tw-prose-headings: #201e1d;
+  --tw-prose-links: #201e1d;
+  --tw-prose-bold: #201e1d;
+  --tw-prose-counters: #444141;
+  --tw-prose-bullets: #444141;
+  --tw-prose-hr: #201e1d;
+  --tw-prose-quotes: #201e1d;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 html {
   scroll-behavior: smooth;
-  background-color: var(--color-ground);
+  background: var(--color-paper);
   -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--color-ink);
+  background: var(--color-paper);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  margin: 0;
+}
+
+a {
+  color: var(--color-ink);
+  text-underline-offset: 3px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-cyan);
+  outline-offset: 2px;
+}
+::selection {
+  background: color-mix(in srgb, var(--color-cyan) 28%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ── Header furniture ──────────────────────────────────────────────────── */
+.bs-rule {
+  height: 4px;
+  background: var(--color-ink);
+}
+.bs-rule-thin {
+  height: 1.5px;
+  background: var(--color-ink);
+}
+.bs-rail {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-n800);
+}
+.bs-rail-ink {
+  color: var(--color-ink);
+}
+.bs-sect {
+  display: block;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-n800);
+  margin-bottom: 12px;
+}
+
+/* ── Keys — the only control shape ─────────────────────────────────────── */
+.bs-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 2px;
+  border: 1.5px solid var(--color-ink);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  text-decoration: none;
+  padding: 14px 20px;
+  transition: background-color 120ms ease-out;
+  cursor: pointer;
+}
+.bs-key:hover {
+  background: var(--color-n300);
+}
+.bs-key-ink {
+  background: var(--color-ink);
+  color: var(--color-paper);
+}
+.bs-key-ink:hover {
+  background: #2d2b2b;
+}
+
+/* ── Score flag / kicker — paper on a magenta fill ─────────────────────── */
+.bs-flag {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-paper);
+  background: var(--color-magenta);
+  padding: 5px 9px;
+}
+
+/* ── Bordered container — genuinely discrete items only ────────────────── */
+.bs-box {
+  border: 1.5px solid var(--color-ink);
+  border-radius: 2px;
+  background: var(--color-surface);
+}
+
+/* prose tweaks for the legal pages */
+.prose :where(a):not(:where([class~="not-prose"] *)) {
+  text-decoration-thickness: 1px;
 }
