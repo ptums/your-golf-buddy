@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { CONTACT_EMAIL, PRICE_LABEL } from "../data/site";
 ---
 
 <BaseLayout
@@ -9,20 +10,20 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 >
   <main class="mx-auto max-w-2xl px-6 py-16 prose prose-slate">
     <h1>Terms</h1>
-    <p>Last updated {new Date().getFullYear()}. This page is a work in progress.</p>
+    <p>Last updated {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long" })}.</p>
     <p>
       Your Golf Buddy is provided as-is, with no warranty. The free app stores
       your data on your device; keep your own backups of anything important.
     </p>
     <h2>Golf Buddy Pass</h2>
     <p>
-      The Golf Buddy Pass is a one-time purchase that unlocks cloud sync. It is
-      tied to the pass key you receive after payment, not to an account. Because
-      it is a digital good delivered immediately, purchases are non-refundable
-      except where required by law — if sync isn't working for you, contact us
-      first and we'll sort it out.
+      The Golf Buddy Pass is a one-time {PRICE_LABEL} purchase that unlocks cloud
+      sync. It is tied to the pass key you receive after payment, not to an
+      account. Because it is a digital good delivered immediately, purchases are
+      non-refundable except where required by law — if sync isn't working for
+      you, contact us first and we'll sort it out.
     </p>
     <h2>Contact</h2>
-    <p>Questions: <a href="mailto:hello@yourbuddy.golf">hello@yourbuddy.golf</a></p>
+    <p>Questions: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></p>
   </main>
 </BaseLayout>

@@ -1,0 +1,14 @@
+# App paths that used to live on the apex (yourbuddy.golf) — send anyone with an
+# old link or an installed PWA to app.yourbuddy.golf. Inert until this Worker
+# actually serves the apex (phase 3b cutover). 301 = permanent.
+/games/*               https://app.yourbuddy.golf/games/:splat            301
+/games                 https://app.yourbuddy.golf/games                   301
+/game/*                https://app.yourbuddy.golf/game/:splat             301
+/game                  https://app.yourbuddy.golf/game                    301
+/settings              https://app.yourbuddy.golf/settings                301
+/profile-registration  https://app.yourbuddy.golf/profile-registration    301
+/how-to                https://app.yourbuddy.golf/how-to                  301
+/practice-drills       https://app.yourbuddy.golf/practice-drills         301
+/swing-tips            https://app.yourbuddy.golf/swing-tips              301
+/manifest.json         https://app.yourbuddy.golf/manifest.json           301
+/sw.js                 https://app.yourbuddy.golf/sw.js                    301

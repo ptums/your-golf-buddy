@@ -72,11 +72,11 @@ apex. After the switch the apex serves marketing HTML. Mitigation:
 1. One final `ygb-web` deploy still on the apex that rewrites `manifest.json`
    `start_url` + `scope` to `https://app.yourbuddy.golf`, so installed apps
    re-anchor on next SW update.
-2. The marketing Worker 301s the app's known paths to `app.yourbuddy.golf`:
-   `/games`, `/game`, `/settings`, `/profile-registration`, `/how-to`,
-   `/practice-drills`, `/swing-tips`, `/manifest.json`, `/sw.js`.
+2. The marketing Worker 301s the app's known paths to `app.yourbuddy.golf`
+   (`sites/marketing/public/_redirects`, already in place and inert until the
+   Worker owns the apex).
 3. Then flip the `ygb-web` route to `app.yourbuddy.golf` and the marketing route
-   onto the apex in the same deploy window.
+   onto the apex — see **Phase 3b** below.
 
 User base is small today, so the exposure is limited but real.
 
@@ -144,9 +144,35 @@ Phases 1–4 do not depend on the payment work and can ship first.
 2. **Scaffold** `sites/marketing` — workspace, deploy job, minimal Astro site.
    *(done — builds, `astro check` clean, wrangler dry-run OK; not yet deployed
    because the token/AE blockers still hold all deploys.)*
-3. **Landing page** — full content, components, SEO + LLM files; cut the apex
-   over to marketing.
-4. **`/privacy`, `/terms`, `/welcome`** (welcome stubbed until step 5).
+3. **Landing page** *(done — content, JSON-LD, `llms.txt` / `llms-full.txt`,
+   generated `og.png`, `_redirects`)*. `ygb-marketing` deploys with no routes,
+   so it went live at `https://ygb-marketing.<subdomain>.workers.dev` even while
+   the routed Workers are blocked. Full site is previewable there now.
+4. **`/privacy`, `/terms`** done (real copy). `/welcome` stubbed until phase 5.
 5. **Payment** — Stripe Payment Link, `/welcome` verification Worker, pass-key
    HMAC issue/verify, Settings UI.
 6. **Flip the sync gate** in `profile-sync` (after the grace decision).
+
+### Phase 3b — the apex cutover (run once, deliberately)
+
+Only after the `Zone · Workers Routes · Edit` token scope is in place and a
+normal deploy is green. Do it as one PR:
+
+1. `apps/web/public/manifest.json` — set `start_url` and `scope` to
+   `https://app.yourbuddy.golf/` (absolute). Deploy `ygb-web` **first** so
+   installed PWAs re-anchor on their next service-worker update.
+2. `apps/web/wrangler.jsonc` — remove the `yourbuddy.golf` route (keep only
+   `app.yourbuddy.golf`). Deploy `ygb-web` again → the apex custom domain is
+   now unclaimed.
+3. `sites/marketing/wrangler.jsonc` — add
+   `"routes": [{ "pattern": "yourbuddy.golf", "custom_domain": true },
+   { "pattern": "www.yourbuddy.golf", "custom_domain": true }]`. Deploy
+   `ygb-marketing` → it now serves the apex; `public/_redirects` starts
+   forwarding the old app paths.
+4. Drop the apex + `www` from `CORS_ORIGINS` in both services once nothing on
+   the apex needs the API. Point the web deploy health check at
+   `https://app.yourbuddy.golf` (or set the `WEB_URL` repo var).
+5. Verify: `yourbuddy.golf` → marketing, `yourbuddy.golf/games` → 301 to
+   `app.yourbuddy.golf/games`, app + sync work on `app.yourbuddy.golf`.
+
+Steps 2 and 3 are a brief window where the apex 404s — do them back to back.

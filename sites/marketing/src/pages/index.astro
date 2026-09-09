@@ -1,26 +1,85 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-
-const APP_URL = "https://app.yourbuddy.golf";
-// Stripe Payment Link — set in phase 5.
-const BUY_URL = APP_URL;
+import Faq from "../components/Faq.astro";
+import {
+  APP_URL,
+  SITE_URL,
+  BUY_URL,
+  PRICE,
+  PRICE_LABEL,
+  features,
+  steps,
+  faqs,
+} from "../data/site";
 
 const title = "Your Golf Buddy — offline golf scorecard & notes";
 const description =
-  "A free, offline-first golf scorecard app. Track every round, keep notes on every hole, work on your clubs. No account, no email. A one-time $9 pass adds cloud sync across devices.";
+  "A free, offline-first golf scorecard app. Track par, score, and putts hole by hole, keep a note on every round, and see your game trend. No account, no email. A one-time $9 pass adds cloud sync across devices.";
+
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Your Golf Buddy",
+    applicationCategory: "SportsApplication",
+    operatingSystem: "Web, iOS, Android",
+    url: SITE_URL,
+    description,
+    offers: [
+      {
+        "@type": "Offer",
+        name: "Free",
+        price: "0",
+        priceCurrency: "USD",
+        description: "Full app on one device, no account.",
+      },
+      {
+        "@type": "Offer",
+        name: "Golf Buddy Pass",
+        price: String(PRICE),
+        priceCurrency: "USD",
+        description: "One-time purchase — cloud sync and backup across devices.",
+        url: BUY_URL,
+      },
+    ],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Your Golf Buddy",
+    url: SITE_URL,
+    logo: `${SITE_URL}/favicon.svg`,
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Your Golf Buddy",
+    url: SITE_URL,
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    })),
+  },
+];
 ---
 
-<BaseLayout title={title} description={description} path="/">
-  <main class="mx-auto max-w-5xl px-6">
-    <section class="flex flex-col items-center gap-6 py-20 text-center sm:py-28">
+<BaseLayout title={title} description={description} path="/" jsonLd={jsonLd}>
+  <main>
+    <!-- Hero -->
+    <section class="mx-auto flex max-w-5xl flex-col items-center gap-6 px-6 py-20 text-center sm:py-28">
       <p class="rounded-full border border-amber-300 bg-amber-100/60 px-3 py-1 text-xs font-medium tracking-wide text-amber-800 uppercase">
-        Works offline · No account
+        Works offline · No account · No ads
       </p>
-      <h1 class="max-w-2xl text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+      <h1 class="max-w-3xl text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
         Track every round. Keep every note.
       </h1>
       <p class="max-w-xl text-lg text-slate-600">
-        Your Golf Buddy is a simple scorecard you actually want to use on the
+        Your Golf Buddy is a scorecard you actually want to pull out on the
         course — par, score, and putts hole by hole, plus a note for how the
         round felt. Everything stays on your device.
       </p>
@@ -29,39 +88,139 @@ const description =
           href={APP_URL}
           class="rounded-lg bg-[var(--color-brand)] px-5 py-3 font-semibold text-white transition hover:bg-[var(--color-brand-dark)]"
         >
-          Open the app
+          Open the app — free
         </a>
         <a
-          href={BUY_URL}
+          href="#pricing"
           class="rounded-lg border border-slate-300 px-5 py-3 font-semibold text-slate-800 transition hover:border-slate-400"
         >
-          Get the Pass — $9
+          See the {PRICE_LABEL} Pass
         </a>
+      </div>
+      <p class="text-xs text-slate-500">
+        No sign-up. Add it to your home screen and play.
+      </p>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="mx-auto max-w-5xl scroll-mt-20 px-6 py-16">
+      <h2 class="mb-10 text-3xl font-bold text-slate-900">
+        Everything a round needs, nothing it doesn't
+      </h2>
+      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {
+          features.map((c) => (
+            <div class="rounded-xl border border-amber-200 bg-white/70 p-6">
+              <h3 class="mb-1 font-semibold text-slate-900">{c.title}</h3>
+              <p class="text-sm leading-relaxed text-slate-600">{c.body}</p>
+            </div>
+          ))
+        }
       </div>
     </section>
 
-    <section class="grid gap-6 pb-24 sm:grid-cols-3">
-      {
-        [
-          {
-            h: "Score in seconds",
-            p: "Tap in par, strokes, and putts. Your running total updates as you play.",
-          },
-          {
-            h: "Yours, on your device",
-            p: "No sign-up, no email address. Your rounds live in the app and work with no signal.",
-          },
-          {
-            h: "Sync when you want it",
-            p: "A one-time $9 pass backs your rounds up and syncs them across your phones and tablets.",
-          },
-        ].map((c) => (
-          <div class="rounded-xl border border-amber-200 bg-white/70 p-6">
-            <h2 class="mb-1 font-semibold text-slate-900">{c.h}</h2>
-            <p class="text-sm text-slate-600">{c.p}</p>
-          </div>
-        ))
-      }
+    <!-- How it works -->
+    <section id="how" class="mx-auto max-w-5xl scroll-mt-20 px-6 py-16">
+      <h2 class="mb-10 text-3xl font-bold text-slate-900">How it works</h2>
+      <ol class="grid gap-6 sm:grid-cols-3">
+        {
+          steps.map((s, i) => (
+            <li class="rounded-xl border border-amber-200 bg-white/70 p-6">
+              <div class="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-brand)] font-semibold text-white">
+                {i + 1}
+              </div>
+              <h3 class="mb-1 font-semibold text-slate-900">{s.title}</h3>
+              <p class="text-sm leading-relaxed text-slate-600">{s.body}</p>
+            </li>
+          ))
+        }
+      </ol>
+      <p class="mt-6 text-sm text-slate-600">
+        There's a full walkthrough in the app under
+        <a class="underline hover:text-slate-900" href={`${APP_URL}/how-to`}>
+          How to use Your Golf Buddy</a
+        >.
+      </p>
+    </section>
+
+    <!-- Privacy -->
+    <section class="mx-auto max-w-5xl px-6 py-16">
+      <div class="rounded-2xl border border-amber-200 bg-white/70 p-8 sm:p-10">
+        <h2 class="mb-3 text-2xl font-bold text-slate-900">
+          Your data doesn't leave your phone
+        </h2>
+        <p class="max-w-2xl text-slate-600">
+          No account, no email address, no password. Your profile is just a
+          username stored in your browser. This site sets no cookies and runs no
+          analytics or trackers. If you turn on sync, your rounds are backed up
+          against a random key generated on your device — never your name — and
+          you can wipe that copy from the app whenever you want.
+        </p>
+      </div>
+    </section>
+
+    <!-- Pricing -->
+    <section id="pricing" class="mx-auto max-w-5xl scroll-mt-20 px-6 py-16">
+      <h2 class="mb-2 text-3xl font-bold text-slate-900">Pricing</h2>
+      <p class="mb-10 text-slate-600">
+        The app is free. Pay once, only if you want your rounds on more than one
+        device.
+      </p>
+      <div class="grid gap-6 sm:grid-cols-2">
+        <div class="rounded-2xl border border-amber-200 bg-white/70 p-8">
+          <h3 class="text-lg font-semibold text-slate-900">Free</h3>
+          <p class="mt-1 text-3xl font-bold text-slate-900">$0</p>
+          <ul class="mt-5 space-y-2 text-sm text-slate-600">
+            <li>✓ Full scoring, notes, and history</li>
+            <li>✓ Swing tips and practice drills</li>
+            <li>✓ Works offline, installable</li>
+            <li>✓ Recovery key to move devices</li>
+          </ul>
+          <a
+            href={APP_URL}
+            class="mt-6 inline-block rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:border-slate-400"
+          >
+            Open the app
+          </a>
+        </div>
+        <div class="rounded-2xl border-2 border-[var(--color-brand)] bg-white p-8">
+          <h3 class="text-lg font-semibold text-slate-900">Golf Buddy Pass</h3>
+          <p class="mt-1 text-3xl font-bold text-slate-900">
+            {PRICE_LABEL}
+            <span class="text-base font-normal text-slate-500">once</span>
+          </p>
+          <ul class="mt-5 space-y-2 text-sm text-slate-600">
+            <li>✓ Everything in Free</li>
+            <li>✓ Cloud sync across all your devices</li>
+            <li>✓ Automatic off-device backup</li>
+            <li>✓ One payment — no subscription</li>
+          </ul>
+          <a
+            href={BUY_URL}
+            class="mt-6 inline-block rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--color-brand-dark)]"
+          >
+            Get the Pass
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <Faq />
+
+    <!-- Final CTA -->
+    <section class="mx-auto max-w-5xl px-6 pb-24">
+      <div class="rounded-2xl bg-slate-900 p-10 text-center text-white">
+        <h2 class="text-2xl font-bold">Play your next round with it</h2>
+        <p class="mx-auto mt-2 max-w-md text-slate-300">
+          Free, offline, and ready in the time it takes to walk to the first tee.
+        </p>
+        <a
+          href={APP_URL}
+          class="mt-6 inline-block rounded-lg bg-[var(--color-brand)] px-5 py-3 font-semibold text-white hover:bg-[var(--color-brand-dark)]"
+        >
+          Open Your Golf Buddy
+        </a>
+      </div>
     </section>
   </main>
 </BaseLayout>

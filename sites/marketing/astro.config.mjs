@@ -8,7 +8,13 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   site: "https://yourbuddy.golf",
   trailingSlash: "never",
-  integrations: [sitemap()],
+  integrations: [
+    sitemap({
+      // Keep non-HTML routes (og.png, llms.txt) out of the sitemap.
+      filter: (page) =>
+        !/\/(og\.png|llms\.txt|llms-full\.txt)$/.test(page),
+    }),
+  ],
   vite: {
     plugins: [tailwindcss()],
   },
