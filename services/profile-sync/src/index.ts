@@ -13,6 +13,7 @@ import { pushChanges } from "./sync/push.js";
 import { pullChanges } from "./sync/pull.js";
 import { deleteProfileData } from "./sync/delete.js";
 import { runBackup } from "./backup.js";
+import { claimPass } from "./pass/claim.js";
 
 const routes = new Hono<AuthedEnv>();
 
@@ -84,6 +85,9 @@ routes.post("/log", async (c) => {
   });
   return c.body(null, 204);
 });
+
+// Stripe checkout session -> Golf Buddy Pass. 404 until PASS_ENABLED + secrets.
+routes.post("/pass/claim", claimPass);
 
 export const app = new Hono<{ Bindings: Env }>();
 

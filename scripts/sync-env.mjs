@@ -39,6 +39,12 @@ const files = {
   "apps/web/.env.local": [
     `NEXT_PUBLIC_SYNC_ENDPOINT=${env.NEXT_PUBLIC_SYNC_ENDPOINT ?? "http://localhost:8787/api"}`,
     `NEXT_PUBLIC_COURSE_LS_ENDPOINT=${env.NEXT_PUBLIC_COURSE_LS_ENDPOINT ?? ""}`,
+    `NEXT_PUBLIC_PASS_ENABLED=${env.NEXT_PUBLIC_PASS_ENABLED ?? ""}`,
+  ],
+  "sites/marketing/.env": [
+    `PUBLIC_PASS_ENABLED=${env.PUBLIC_PASS_ENABLED ?? ""}`,
+    `PUBLIC_STRIPE_PAYMENT_LINK=${env.PUBLIC_STRIPE_PAYMENT_LINK ?? ""}`,
+    `PUBLIC_API_URL=${env.NEXT_PUBLIC_SYNC_ENDPOINT?.replace(/\/api$/, "") ?? ""}`,
   ],
 };
 

@@ -5,6 +5,7 @@ import {
   APP_URL,
   SITE_URL,
   BUY_URL,
+  PASS_ENABLED,
   PRICE,
   PRICE_LABEL,
   features,
@@ -13,8 +14,32 @@ import {
 } from "../data/site";
 
 const title = "Your Golf Buddy — offline golf scorecard & notes";
-const description =
-  "A free, offline-first golf scorecard app. Track par, score, and putts hole by hole, keep a note on every round, and see your game trend. No account, no email. A one-time $9 pass adds cloud sync across devices.";
+const description = PASS_ENABLED
+  ? "A free, offline-first golf scorecard app. Track par, score, and putts hole by hole, keep a note on every round, and see your game trend. No account, no email. A one-time $9 pass adds cloud sync across devices."
+  : "A free, offline-first golf scorecard app. Track par, score, and putts hole by hole, keep a note on every round, and see your game trend. No account, no email, no ads.";
+
+const offers = [
+  {
+    "@type": "Offer",
+    name: "Free",
+    price: "0",
+    priceCurrency: "USD",
+    description: "The full app, no account.",
+  },
+  ...(PASS_ENABLED
+    ? [
+        {
+          "@type": "Offer",
+          name: "Golf Buddy Pass",
+          price: String(PRICE),
+          priceCurrency: "USD",
+          description:
+            "One-time purchase — cloud sync and backup across devices.",
+          url: BUY_URL,
+        },
+      ]
+    : []),
+];
 
 const jsonLd = [
   {
@@ -25,23 +50,7 @@ const jsonLd = [
     operatingSystem: "Web, iOS, Android",
     url: SITE_URL,
     description,
-    offers: [
-      {
-        "@type": "Offer",
-        name: "Free",
-        price: "0",
-        priceCurrency: "USD",
-        description: "Full app on one device, no account.",
-      },
-      {
-        "@type": "Offer",
-        name: "Golf Buddy Pass",
-        price: String(PRICE),
-        priceCurrency: "USD",
-        description: "One-time purchase — cloud sync and backup across devices.",
-        url: BUY_URL,
-      },
-    ],
+    offers,
   },
   {
     "@context": "https://schema.org",
@@ -90,12 +99,16 @@ const jsonLd = [
         >
           Open the app — free
         </a>
-        <a
-          href="#pricing"
-          class="rounded-lg border border-slate-300 px-5 py-3 font-semibold text-slate-800 transition hover:border-slate-400"
-        >
-          See the {PRICE_LABEL} Pass
-        </a>
+        {
+          PASS_ENABLED && (
+            <a
+              href="#pricing"
+              class="rounded-lg border border-slate-300 px-5 py-3 font-semibold text-slate-800 transition hover:border-slate-400"
+            >
+              See the {PRICE_LABEL} Pass
+            </a>
+          )
+        }
       </div>
       <p class="text-xs text-slate-500">
         No sign-up. Add it to your home screen and play.
@@ -159,51 +172,56 @@ const jsonLd = [
       </div>
     </section>
 
-    <!-- Pricing -->
-    <section id="pricing" class="mx-auto max-w-5xl scroll-mt-20 px-6 py-16">
-      <h2 class="mb-2 text-3xl font-bold text-slate-900">Pricing</h2>
-      <p class="mb-10 text-slate-600">
-        The app is free. Pay once, only if you want your rounds on more than one
-        device.
-      </p>
-      <div class="grid gap-6 sm:grid-cols-2">
-        <div class="rounded-2xl border border-amber-200 bg-white/70 p-8">
-          <h3 class="text-lg font-semibold text-slate-900">Free</h3>
-          <p class="mt-1 text-3xl font-bold text-slate-900">$0</p>
-          <ul class="mt-5 space-y-2 text-sm text-slate-600">
-            <li>✓ Full scoring, notes, and history</li>
-            <li>✓ Swing tips and practice drills</li>
-            <li>✓ Works offline, installable</li>
-            <li>✓ Recovery key to move devices</li>
-          </ul>
-          <a
-            href={APP_URL}
-            class="mt-6 inline-block rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:border-slate-400"
-          >
-            Open the app
-          </a>
-        </div>
-        <div class="rounded-2xl border-2 border-[var(--color-brand)] bg-white p-8">
-          <h3 class="text-lg font-semibold text-slate-900">Golf Buddy Pass</h3>
-          <p class="mt-1 text-3xl font-bold text-slate-900">
-            {PRICE_LABEL}
-            <span class="text-base font-normal text-slate-500">once</span>
+    {
+      PASS_ENABLED && (
+        <section id="pricing" class="mx-auto max-w-5xl scroll-mt-20 px-6 py-16">
+          <h2 class="mb-2 text-3xl font-bold text-slate-900">Pricing</h2>
+          <p class="mb-10 text-slate-600">
+            The app is free. Pay once, only if you want your rounds on more than
+            one device.
           </p>
-          <ul class="mt-5 space-y-2 text-sm text-slate-600">
-            <li>✓ Everything in Free</li>
-            <li>✓ Cloud sync across all your devices</li>
-            <li>✓ Automatic off-device backup</li>
-            <li>✓ One payment — no subscription</li>
-          </ul>
-          <a
-            href={BUY_URL}
-            class="mt-6 inline-block rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--color-brand-dark)]"
-          >
-            Get the Pass
-          </a>
-        </div>
-      </div>
-    </section>
+          <div class="grid gap-6 sm:grid-cols-2">
+            <div class="rounded-2xl border border-amber-200 bg-white/70 p-8">
+              <h3 class="text-lg font-semibold text-slate-900">Free</h3>
+              <p class="mt-1 text-3xl font-bold text-slate-900">$0</p>
+              <ul class="mt-5 space-y-2 text-sm text-slate-600">
+                <li>✓ Full scoring, notes, and history</li>
+                <li>✓ Swing tips and practice drills</li>
+                <li>✓ Works offline, installable</li>
+                <li>✓ Recovery key to move devices</li>
+              </ul>
+              <a
+                href={APP_URL}
+                class="mt-6 inline-block rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:border-slate-400"
+              >
+                Open the app
+              </a>
+            </div>
+            <div class="rounded-2xl border-2 border-[var(--color-brand)] bg-white p-8">
+              <h3 class="text-lg font-semibold text-slate-900">
+                Golf Buddy Pass
+              </h3>
+              <p class="mt-1 text-3xl font-bold text-slate-900">
+                {PRICE_LABEL}
+                <span class="text-base font-normal text-slate-500">once</span>
+              </p>
+              <ul class="mt-5 space-y-2 text-sm text-slate-600">
+                <li>✓ Everything in Free</li>
+                <li>✓ Cloud sync across all your devices</li>
+                <li>✓ Automatic off-device backup</li>
+                <li>✓ One payment — no subscription</li>
+              </ul>
+              <a
+                href={BUY_URL}
+                class="mt-6 inline-block rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--color-brand-dark)]"
+              >
+                Get the Pass
+              </a>
+            </div>
+          </div>
+        </section>
+      )
+    }
 
     <Faq />
 

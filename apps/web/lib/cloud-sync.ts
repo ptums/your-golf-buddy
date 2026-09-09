@@ -182,10 +182,18 @@ class CloudSyncService {
   private authHeaders(): Record<string, string> {
     const profileId = this.getProfileId();
     if (!profileId) throw new Error("No profile — cannot sync");
-    return {
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
       Authorization: `Bearer ${profileId}`,
     };
+    // Golf Buddy Pass, if the user has entered one (Settings). Harmless when
+    // the server isn't enforcing it yet; required once PASS_ENFORCED is on.
+    const pass =
+      typeof window !== "undefined"
+        ? localStorage.getItem("golf_buddy_pass")
+        : null;
+    if (pass) headers["X-Golf-Pass"] = pass;
+    return headers;
   }
 
   private async pushChanges(): Promise<boolean> {

@@ -152,9 +152,15 @@ Phases 1–4 do not depend on the payment work and can ship first.
    (`noindex`, out of the sitemap) with activation steps + a manual-key note;
    phase 5 turns it into a Worker route that verifies `?session_id=` and shows
    the issued key inline.
-5. **Payment** — Stripe Payment Link, `/welcome` verification Worker, pass-key
-   HMAC issue/verify, Settings UI.
-6. **Flip the sync gate** in `profile-sync` (after the grace decision).
+5. **Payment machinery** *(built, dark — see [`pass.md`](pass.md))*. `src/pass.ts`
+   (HMAC issue/verify), `POST /pass/claim` on profile-sync (Stripe session →
+   pass), `X-Golf-Pass` on the app's sync requests, a Settings field, and the
+   `/welcome` claim flow. All behind flags (`PUBLIC_PASS_ENABLED`,
+   `NEXT_PUBLIC_PASS_ENABLED`, `PASS_ENABLED`) that are off, so the site still
+   reads as a free app. Launch = create the Stripe Payment Link + set secrets +
+   flip flags (checklist in `pass.md`).
+6. **Flip the sync gate** — `PASS_ENFORCED` in `profile-sync` (after the grace
+   decision: grandfather existing profiles, or comp `ptums` a key).
 
 ### Phase 3b — the apex cutover (run once, deliberately)
 

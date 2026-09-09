@@ -78,6 +78,11 @@ setup, `namespace_id` is just an identifier). See `src/auth.ts`.
 Every read and write is scoped to the token's profile (`src/sync/*`), so one
 token never sees another profile's data.
 
+**Golf Buddy Pass** (dark): when `PASS_ENFORCED` is `"true"`, `/sync/*` also
+requires a valid `X-Golf-Pass` header — an HMAC-signed token issued by
+`POST /pass/claim` after a Stripe purchase (`src/pass.ts`, `src/pass/claim.ts`).
+Off by default; sync is free. Full launch steps in [`docs/pass.md`](../../docs/pass.md).
+
 ## API
 
 Base path `/api`, also served at the root. Routes in `src/index.ts`.
@@ -91,6 +96,7 @@ Base path `/api`, also served at the root. Routes in `src/index.ts`.
 | `POST /api/sync/pull`  | Rows changed since the client's cursors (`limit` 1–1000, default 100). `{ changes, serverCursors }`. Games carry `course_external_id`, scores carry `game_external_id`. |
 | `POST /api/sync/delete`| Hard-delete every server row for the caller's profile. `{ status:"ok", deleted }`. |
 | `POST /api/log`        | Client-error sink → Analytics Engine (`TELEMETRY` binding). No auth; IP rate-limited (30/min, `LOG_LIMITER`). Body `{ message, stack?, url?, level? }`. Always `204`. Used by the web app's global error handler (`apps/web/lib/error-logger.ts`). |
+| `POST /api/pass/claim` | Stripe Checkout session → Golf Buddy Pass. No auth; IP rate-limited. Body `{ sessionId }`. `404` unless `PASS_ENABLED` + the `STRIPE_SECRET_KEY` / `PASS_SECRET` secrets are set. See [`docs/pass.md`](../../docs/pass.md). |
 
 **Cursors**: `max(updated_at, deleted_at)` per table, ISO-8601. `pull` returns
 rows where `updated_at > cursor` OR `deleted_at > cursor`, ordered by `updated_at`.

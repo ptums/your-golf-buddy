@@ -1,4 +1,5 @@
 import type { Context, Next } from "hono";
+import { flagOn, verifyPass } from "./pass.js";
 
 /**
  * Capability-token auth. The profile's client-generated UUID *is* the
@@ -42,6 +43,22 @@ export async function requireProfile(
     const { success } = await limiter.limit({ key: `sync:${profileId}` });
     if (!success) {
       return c.json({ status: "error", message: "Rate limit exceeded" }, 429);
+    }
+  }
+
+  // Golf Buddy Pass gate. Dark by default: only enforced once PASS_ENFORCED is
+  // "true" (and PASS_SECRET is set). Until then sync is free for everyone, which
+  // is the current behaviour. See docs/pass.md for the launch steps.
+  if (flagOn(c.env.PASS_ENFORCED)) {
+    const payload = await verifyPass(
+      c.env.PASS_SECRET,
+      c.req.header("X-Golf-Pass"),
+    );
+    if (!payload) {
+      return c.json(
+        { status: "error", message: "A Golf Buddy Pass is required for sync" },
+        402,
+      );
     }
   }
 

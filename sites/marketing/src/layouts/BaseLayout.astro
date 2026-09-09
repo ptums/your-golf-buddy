@@ -1,6 +1,6 @@
 ---
 import "../styles/global.css";
-import { APP_URL } from "../data/site";
+import { APP_URL, PASS_ENABLED } from "../data/site";
 
 interface Props {
   title: string;
@@ -73,7 +73,7 @@ const ogImage = new URL("/og.png", Astro.site).href;
         <nav class="hidden items-center gap-6 text-sm text-slate-600 sm:flex">
           <a class="hover:text-slate-900" href="/#features">Features</a>
           <a class="hover:text-slate-900" href="/#how">How it works</a>
-          <a class="hover:text-slate-900" href="/#pricing">Pricing</a>
+          {PASS_ENABLED && <a class="hover:text-slate-900" href="/#pricing">Pricing</a>}
           <a class="hover:text-slate-900" href="/#faq">FAQ</a>
         </nav>
         <a

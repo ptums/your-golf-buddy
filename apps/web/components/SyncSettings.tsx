@@ -11,9 +11,22 @@ export default function SyncSettings() {
   const [profileKey, setProfileKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  const passEnabled = process.env.NEXT_PUBLIC_PASS_ENABLED === "true";
+  const [passInput, setPassInput] = useState("");
+  const [passSaved, setPassSaved] = useState(false);
+
   useEffect(() => {
     setProfileKey(localStorage.getItem("golf_buddy_profile_id"));
+    setPassInput(localStorage.getItem("golf_buddy_pass") ?? "");
   }, []);
+
+  const savePass = () => {
+    const v = passInput.trim();
+    if (v) localStorage.setItem("golf_buddy_pass", v);
+    else localStorage.removeItem("golf_buddy_pass");
+    setPassSaved(true);
+    setTimeout(() => setPassSaved(false), 2000);
+  };
 
   const copyKey = async () => {
     if (!profileKey) return;
@@ -219,6 +232,41 @@ export default function SyncSettings() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Golf Buddy Pass */}
+        {passEnabled && (
+          <div className="border-t border-slate-200 pt-4">
+            <p className="font-medium text-slate-700 text-sm">Golf Buddy Pass</p>
+            <p className="text-xs text-slate-500 mb-2">
+              Paste the pass key from your purchase to unlock cloud sync across
+              devices. Don&apos;t have one?{" "}
+              <a
+                href="https://yourbuddy.golf/#pricing"
+                target="_blank"
+                rel="noreferrer"
+                className="underline hover:text-slate-700"
+              >
+                Get the Pass
+              </a>
+              .
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={passInput}
+                onChange={(e) => setPassInput(e.target.value)}
+                placeholder="pass key"
+                className="flex-1 text-xs bg-slate-50 border border-slate-200 rounded px-2 py-2 break-all"
+              />
+              <button
+                onClick={savePass}
+                className="text-sm px-3 rounded-lg border border-slate-300 hover:bg-slate-50 transition-colors whitespace-nowrap"
+              >
+                {passSaved ? "Saved" : "Save"}
+              </button>
+            </div>
           </div>
         )}
 

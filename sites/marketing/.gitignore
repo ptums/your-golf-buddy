@@ -5,3 +5,5 @@ public/og.png
 .astro/
 # wrangler
 .wrangler/
+# local env (pnpm env:sync writes this)
+.env

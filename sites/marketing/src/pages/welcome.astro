@@ -1,10 +1,10 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { APP_URL, CONTACT_EMAIL } from "../data/site";
+import { APP_URL, API_URL, CONTACT_EMAIL, PASS_ENABLED } from "../data/site";
 
-// Post-purchase landing page. Phase 4: static stub explaining activation.
-// Phase 5 turns this into a Worker route that reads ?session_id=, verifies the
-// Stripe Checkout session, and shows the issued pass key inline.
+// Post-purchase landing page. Reads ?session_id= (set by the Stripe Payment
+// Link success URL), exchanges it for a pass key via POST {API_URL}/pass/claim,
+// and shows the key. Dark until PUBLIC_PASS_ENABLED=true.
 ---
 
 <BaseLayout
@@ -14,55 +14,135 @@ import { APP_URL, CONTACT_EMAIL } from "../data/site";
   noindex
 >
   <main class="mx-auto max-w-2xl px-6 py-16">
-    <h1 class="text-3xl font-bold text-slate-900">Thanks — you're set</h1>
-    <p class="mt-3 text-slate-600">
-      Your Golf Buddy Pass unlocks cloud sync across all your devices. Here's how
-      to turn it on.
-    </p>
+    {
+      !PASS_ENABLED ? (
+        <div>
+          <h1 class="text-3xl font-bold text-slate-900">Nothing here yet</h1>
+          <p class="mt-3 text-slate-600">
+            The Golf Buddy Pass isn't on sale yet.{" "}
+            <a class="underline hover:text-slate-900" href="/">
+              Back home
+            </a>
+            .
+          </p>
+        </div>
+      ) : (
+        <div>
+          <h1 class="text-3xl font-bold text-slate-900">Thanks — you're set</h1>
+          <p class="mt-3 text-slate-600">
+            Your Golf Buddy Pass unlocks cloud sync across all your devices.
+            Here's your key and how to use it.
+          </p>
 
-    <div
-      class="mt-8 rounded-xl border border-dashed border-amber-300 bg-amber-50 p-5 text-sm text-amber-900"
-    >
-      <p class="font-semibold">Your pass key</p>
-      <p class="mt-1">
-        Automatic key delivery isn't switched on yet. For now, email
-        <a class="underline" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
-        with your payment receipt and you'll get your key back the same day.
-      </p>
-    </div>
-
-    <ol class="mt-8 space-y-4">
-      <li class="rounded-xl border border-amber-200 bg-white/70 p-5">
-        <p class="font-semibold text-slate-900">1. Open Your Golf Buddy</p>
-        <p class="mt-1 text-sm text-slate-600">
-          On the device you play with. <a
-            class="underline hover:text-slate-900"
-            href={APP_URL}>{APP_URL.replace("https://", "")}</a
+          <div
+            id="key-box"
+            class="mt-8 rounded-xl border border-dashed border-amber-300 bg-amber-50 p-5 text-sm text-amber-900"
           >
-        </p>
-      </li>
-      <li class="rounded-xl border border-amber-200 bg-white/70 p-5">
-        <p class="font-semibold text-slate-900">
-          2. Go to Settings → Golf Buddy Pass
-        </p>
-        <p class="mt-1 text-sm text-slate-600">
-          Paste your pass key into the field and save.
-        </p>
-      </li>
-      <li class="rounded-xl border border-amber-200 bg-white/70 p-5">
-        <p class="font-semibold text-slate-900">3. Turn on sync</p>
-        <p class="mt-1 text-sm text-slate-600">
-          Flip the sync switch. Your rounds back up right away and stay in step
-          on every device where you enter the same key.
-        </p>
-      </li>
-    </ol>
+            <p class="font-semibold">Your pass key</p>
+            <p id="key-status" class="mt-1">Checking your purchase…</p>
+            <div id="key-wrap" class="mt-2 hidden gap-2">
+              <code
+                id="key-value"
+                class="flex-1 rounded border border-amber-300 bg-white px-2 py-2 break-all select-all"
+              />
+              <button
+                id="key-copy"
+                class="rounded-lg border border-amber-300 px-3 text-sm whitespace-nowrap hover:bg-white"
+              >
+                Copy
+              </button>
+            </div>
+            <p id="key-fallback" class="mt-1 hidden">
+              Couldn't confirm it automatically — email{" "}
+              <a class="underline" href={`mailto:${CONTACT_EMAIL}`}>
+                {CONTACT_EMAIL}
+              </a>{" "}
+              with your payment receipt and you'll get your key back the same
+              day.
+            </p>
+          </div>
 
-    <p class="mt-8 text-sm text-slate-600">
-      Stuck? Email <a
-        class="underline hover:text-slate-900"
-        href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a
-      > and we'll sort it out.
-    </p>
+          <ol class="mt-8 space-y-4">
+            <li class="rounded-xl border border-amber-200 bg-white/70 p-5">
+              <p class="font-semibold text-slate-900">1. Open Your Golf Buddy</p>
+              <p class="mt-1 text-sm text-slate-600">
+                On the device you play with.{" "}
+                <a class="underline hover:text-slate-900" href={APP_URL}>
+                  {APP_URL.replace("https://", "")}
+                </a>
+              </p>
+            </li>
+            <li class="rounded-xl border border-amber-200 bg-white/70 p-5">
+              <p class="font-semibold text-slate-900">
+                2. Settings → Golf Buddy Pass
+              </p>
+              <p class="mt-1 text-sm text-slate-600">
+                Paste the key above into the field and save.
+              </p>
+            </li>
+            <li class="rounded-xl border border-amber-200 bg-white/70 p-5">
+              <p class="font-semibold text-slate-900">3. Turn on sync</p>
+              <p class="mt-1 text-sm text-slate-600">
+                Flip the sync switch. Your rounds back up right away and stay in
+                step on every device where you enter the same key.
+              </p>
+            </li>
+          </ol>
+
+          <p class="mt-8 text-sm text-slate-600">
+            Stuck? Email{" "}
+            <a class="underline hover:text-slate-900" href={`mailto:${CONTACT_EMAIL}`}>
+              {CONTACT_EMAIL}
+            </a>{" "}
+            and we'll sort it out.
+          </p>
+        </div>
+      )
+    }
   </main>
 </BaseLayout>
+
+{
+  PASS_ENABLED && (
+    <script is:inline define:vars={{ API_URL }}>
+      (async () => {
+        const status = document.getElementById("key-status");
+        const wrap = document.getElementById("key-wrap");
+        const value = document.getElementById("key-value");
+        const fallback = document.getElementById("key-fallback");
+        const copy = document.getElementById("key-copy");
+        const sessionId = new URLSearchParams(location.search).get("session_id");
+
+        const fail = () => {
+          status.textContent = "";
+          fallback.classList.remove("hidden");
+        };
+
+        if (!sessionId) return fail();
+
+        try {
+          const res = await fetch(API_URL + "/pass/claim", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ sessionId }),
+          });
+          const data = await res.json();
+          if (!res.ok || !data.pass) return fail();
+          status.textContent = "Confirmed. Copy this into the app:";
+          value.textContent = data.pass;
+          wrap.classList.remove("hidden");
+          wrap.classList.add("flex");
+          copy.addEventListener("click", async () => {
+            try {
+              await navigator.clipboard.writeText(data.pass);
+              copy.textContent = "Copied";
+              setTimeout(() => (copy.textContent = "Copy"), 2000);
+            } catch {}
+          });
+        } catch {
+          fail();
+        }
+      })();
+    </script>
+  )
+}
