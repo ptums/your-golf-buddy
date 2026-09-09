@@ -11,13 +11,9 @@
   "observability": {
     "enabled": true
   },
-  // Transition: the app serves at both the apex and app.yourbuddy.golf. When the
-  // Astro marketing site ships (docs/marketing-site.md phase 3) the apex route
-  // moves to that Worker and only app.yourbuddy.golf stays here.
-  "routes": [
-    { "pattern": "yourbuddy.golf", "custom_domain": true },
-    { "pattern": "app.yourbuddy.golf", "custom_domain": true }
-  ],
+  // The app lives at app.yourbuddy.golf. The apex + www serve the Astro
+  // marketing site (sites/marketing → ygb-marketing).
+  "routes": [{ "pattern": "app.yourbuddy.golf", "custom_domain": true }],
   //
   // NEXT_PUBLIC_SYNC_ENDPOINT is a *build-time* value (inlined by `next build`),
   // not a Worker var — it is set in the deploy workflow's build job env / a

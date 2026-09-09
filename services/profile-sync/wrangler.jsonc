@@ -13,10 +13,9 @@
     "crons": ["17 3 * * *"]
   },
   "vars": {
-    // Browsers allowed to call this API. During the marketing-site transition
-    // the app answers on both the apex and app.yourbuddy.golf; drop the apex and
-    // the *.workers.dev entry once the app is only on app.yourbuddy.golf.
-    "CORS_ORIGINS": "https://yourbuddy.golf,https://www.yourbuddy.golf,https://app.yourbuddy.golf,https://ygb-web.peter-686.workers.dev,http://localhost:3002",
+    // Browsers allowed to call this API. app.yourbuddy.golf = the app (/sync/*);
+    // yourbuddy.golf + www = the marketing site (/pass/claim from /welcome).
+    "CORS_ORIGINS": "https://app.yourbuddy.golf,https://yourbuddy.golf,https://www.yourbuddy.golf,http://localhost:3002,http://localhost:4321",
     // Golf Buddy Pass feature flags — both dark. See docs/pass.md for launch.
     // PASS_ENABLED  -> POST /pass/claim issues passes (needs STRIPE_SECRET_KEY + PASS_SECRET secrets).
     // PASS_ENFORCED -> /sync/* requires a valid X-Golf-Pass header.

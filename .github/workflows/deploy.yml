@@ -143,10 +143,7 @@ jobs:
         run: pnpm --filter web exec opennextjs-cloudflare deploy
       - name: Health check
         run: |
-          # Apex still serves ygb-web during the marketing-site transition; this
-          # moves to https://app.yourbuddy.golf once the apex is handed to the
-          # Astro site (docs/marketing-site.md phase 3). Override with WEB_URL.
-          url="${{ vars.WEB_URL || 'https://yourbuddy.golf' }}/"
+          url="${{ vars.WEB_URL || 'https://app.yourbuddy.golf' }}/"
           for i in $(seq 1 10); do
             code=$(curl -fsS --max-time 15 -o /dev/null -w '%{http_code}' "$url" || true)
             [ "$code" = "200" ] && { echo "OK $url"; exit 0; }
@@ -172,10 +169,7 @@ jobs:
         run: pnpm --filter marketing exec wrangler deploy
       - name: Health check
         run: |
-          # No custom route until docs/marketing-site.md phase 3 — until then the
-          # site is only on workers.dev. Set MARKETING_URL to check it.
-          url="${{ vars.MARKETING_URL }}"
-          [ -z "$url" ] && { echo "MARKETING_URL not set — skipping health check"; exit 0; }
+          url="${{ vars.MARKETING_URL || 'https://yourbuddy.golf' }}/"
           for i in $(seq 1 10); do
             code=$(curl -fsS --max-time 15 -o /dev/null -w '%{http_code}' "$url" || true)
             [ "$code" = "200" ] && { echo "OK $url"; exit 0; }

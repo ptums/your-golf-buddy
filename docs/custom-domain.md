@@ -2,15 +2,10 @@
 
 | Host | Worker |
 | ---- | ------ |
-| `yourbuddy.golf`, `www.yourbuddy.golf` | `ygb-web` today → `ygb-marketing` after [marketing-site.md](marketing-site.md) phase 3 |
+| `yourbuddy.golf`, `www.yourbuddy.golf` | `ygb-marketing` (the Astro marketing site) |
 | `app.yourbuddy.golf` | `ygb-web` (the app) |
 | `api.yourbuddy.golf` | `ygb-profile-sync` |
 | `courses.yourbuddy.golf` | `ygb-course-ls` |
-
-**Transition (phase 1, in progress):** `ygb-web` has routes for *both* the apex
-and `app.yourbuddy.golf`, so the app answers on either. When the Astro marketing
-site ships, the apex route moves to `ygb-marketing` and only `app.yourbuddy.golf`
-stays on `ygb-web`.
 
 Adding `routes` to a Worker **disables its `*.workers.dev` subdomain** (unless
 you also set `"workers_dev": true`). So once a Worker has a custom-domain route,

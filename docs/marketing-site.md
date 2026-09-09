@@ -162,7 +162,16 @@ Phases 1–4 do not depend on the payment work and can ship first.
 6. **Flip the sync gate** — `PASS_ENFORCED` in `profile-sync` (after the grace
    decision: grandfather existing profiles, or comp `ptums` a key).
 
-### Phase 3b — the apex cutover (run once, deliberately)
+### Phase 3b — the apex cutover  *(done 2026-09-09)*
+
+Executed manually in the Cloudflare dashboard (token was still short a scope):
+`yourbuddy.golf` custom domain moved from `ygb-web` to `ygb-marketing`,
+`app.yourbuddy.golf` added to `ygb-web`. The `wrangler.jsonc` files, `manifest.json`
+`start_url`/`scope`, both `CORS_ORIGINS`, and the deploy health-check URLs were
+then updated to match. `www.yourbuddy.golf` is in `sites/marketing/wrangler.jsonc`
+so the next `ygb-marketing` deploy attaches it.
+
+Original plan, for reference:
 
 Only after the `Zone · Workers Routes · Edit` token scope is in place and a
 normal deploy is green. Do it as one PR:

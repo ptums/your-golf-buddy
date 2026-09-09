@@ -104,14 +104,21 @@ Copy the printed `id` into `services/course-ls/wrangler.jsonc` (replace
 
 ### 5b. Create the backups R2 bucket
 
+First enable R2 once for the account: **dash.cloudflare.com → R2 → Get started**
+(needs a payment method; there's a free tier). Then:
+
 ```bash
 pnpm cf:r2:create      # creates the `ygb-backups` bucket
 ```
 
 No id to copy back — the binding in `services/profile-sync/wrangler.jsonc`
-references the bucket by name. Requires Workers Paid ($5/mo) for the cron
-trigger; the bucket itself is free-tier. Analytics Engine (`ygb_client_errors`,
-used by POST `/log`) needs no setup — the dataset is created on first write.
+references the bucket by name. `wrangler deploy` fails with
+`R2 bucket 'ygb-backups' not found [code: 10085]` until the bucket exists, and
+`Please enable R2 [code: 10042]` until R2 is enabled on the account. Requires
+Workers Paid ($5/mo) for the cron trigger; the bucket itself is free-tier.
+Analytics Engine (`ygb_client_errors`, used by POST `/log`) just needs to be
+enabled in the dashboard (Workers & Pages → Analytics Engine); the dataset is
+created on first write.
 
 ### 6. First deploy (by hand)
 

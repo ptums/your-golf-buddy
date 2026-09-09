@@ -9,12 +9,9 @@
   "assets": {
     "directory": "./dist",
     "not_found_handling": "404-page"
-  }
-  // Phase 3 (docs/marketing-site.md): add the apex routes here and remove
-  // `yourbuddy.golf` from apps/web/wrangler.jsonc in the same deploy —
-  //   "routes": [
-  //     { "pattern": "yourbuddy.golf", "custom_domain": true },
-  //     { "pattern": "www.yourbuddy.golf", "custom_domain": true }
-  //   ]
-  // Until then this deploys to ygb-marketing.<subdomain>.workers.dev.
+  },
+  "routes": [
+    { "pattern": "yourbuddy.golf", "custom_domain": true },
+    { "pattern": "www.yourbuddy.golf", "custom_domain": true }
+  ]
 }
