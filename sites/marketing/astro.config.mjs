@@ -10,9 +10,9 @@ export default defineConfig({
   trailingSlash: "never",
   integrations: [
     sitemap({
-      // Keep non-HTML routes (og.png, llms.txt) out of the sitemap.
+      // Keep non-HTML routes and the transactional /welcome page out.
       filter: (page) =>
-        !/\/(og\.png|llms\.txt|llms-full\.txt)$/.test(page),
+        !/\/(og\.png|llms\.txt|llms-full\.txt|welcome)$/.test(page),
     }),
   ],
   vite: {

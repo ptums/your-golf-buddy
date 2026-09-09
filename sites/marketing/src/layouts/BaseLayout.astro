@@ -9,9 +9,11 @@ interface Props {
   path?: string;
   /** JSON-LD objects to embed in <head>. */
   jsonLd?: Record<string, unknown>[];
+  /** Keep the page out of search indexes (thin / transactional pages). */
+  noindex?: boolean;
 }
 
-const { title, description, path, jsonLd = [] } = Astro.props;
+const { title, description, path, jsonLd = [], noindex = false } = Astro.props;
 const canonical = new URL(path ?? Astro.url.pathname, Astro.site).href.replace(
   /\/$/,
   "",
@@ -28,6 +30,7 @@ const ogImage = new URL("/og.png", Astro.site).href;
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Your Golf Buddy" />

@@ -148,7 +148,10 @@ Phases 1–4 do not depend on the payment work and can ship first.
    generated `og.png`, `_redirects`)*. `ygb-marketing` deploys with no routes,
    so it went live at `https://ygb-marketing.<subdomain>.workers.dev` even while
    the routed Workers are blocked. Full site is previewable there now.
-4. **`/privacy`, `/terms`** done (real copy). `/welcome` stubbed until phase 5.
+4. **`/privacy`, `/terms`, `/welcome`** done. `/welcome` is a static stub
+   (`noindex`, out of the sitemap) with activation steps + a manual-key note;
+   phase 5 turns it into a Worker route that verifies `?session_id=` and shows
+   the issued key inline.
 5. **Payment** — Stripe Payment Link, `/welcome` verification Worker, pass-key
    HMAC issue/verify, Settings UI.
 6. **Flip the sync gate** in `profile-sync` (after the grace decision).
