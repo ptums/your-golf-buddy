@@ -1,0 +1,56 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description: string;
+  /** Path-only, e.g. "/privacy". Defaults to the current page. */
+  path?: string;
+}
+
+const { title, description, path } = Astro.props;
+const canonical = new URL(path ?? Astro.url.pathname, Astro.site).href.replace(
+  /\/$/,
+  "",
+);
+const ogImage = new URL("/og.png", Astro.site).href;
+const APP_URL = "https://app.yourbuddy.golf";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Your Golf Buddy" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <link rel="sitemap" href="/sitemap-index.xml" />
+  </head>
+  <body class="min-h-screen bg-[var(--color-ground)] font-sans text-slate-900 antialiased">
+    <slot />
+    <footer class="border-t border-amber-200/70 px-6 py-10 text-sm text-slate-600">
+      <div class="mx-auto flex max-w-5xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p>© {new Date().getFullYear()} Your Golf Buddy</p>
+        <nav class="flex gap-4">
+          <a class="hover:text-slate-900" href={APP_URL}>Open the app</a>
+          <a class="hover:text-slate-900" href="/privacy">Privacy</a>
+          <a class="hover:text-slate-900" href="/terms">Terms</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -13,18 +13,26 @@ The app itself moves to `app.yourbuddy.golf`.
 | Price | **$9 one-time.** |
 | Payment | **Stripe Payment Link.** Buyer redirected to `/welcome?session_id=…`; a Worker verifies the Stripe session and issues an HMAC-signed pass key; the buyer pastes it into the app's Settings. Sales-tax/VAT registration is the owner's responsibility (revisit Lemon Squeezy / Paddle if that becomes a burden). |
 
-## Where it lives
+## Where it lives  *(scaffolded — phase 2 done)*
 
-- New workspace glob `sites/*` in `pnpm-workspace.yaml`; package `sites/marketing`
-  (`@ygb/marketing`).
-- Astro 5, `output: "static"`, zero JS shipped by default. Integrations:
-  `@astrojs/sitemap`, Tailwind (reuse the app's palette/tokens).
-- Deploys as a Cloudflare Worker with Workers Assets — same pattern as `ygb-web`.
+- Workspace glob `sites/*` in `pnpm-workspace.yaml`; package `marketing`.
+- Astro 7, `output: "static"` (default), zero JS shipped. `build.format: "file"`
+  (`/privacy.html`, served extensionless by Workers Assets). Integrations:
+  `@astrojs/sitemap`; Tailwind v4 via `@tailwindcss/vite` + `@tailwindcss/typography`,
+  brand tokens mirroring `apps/web` in `src/styles/global.css`.
+- Deploys as a **static-assets-only** Cloudflare Worker (no `main`).
   `sites/marketing/wrangler.jsonc`: `name = "ygb-marketing"`,
-  `assets.directory = "./dist"`, routes for `yourbuddy.golf` + `www.yourbuddy.golf`.
-- `turbo.json`: add `sites/marketing` to `build` / `dev`.
-- `.github/workflows/deploy.yml`: new `marketing` job, paths-filter
-  `sites/marketing/**`, post-deploy health check on `/`.
+  `assets.directory = "./dist"`, `not_found_handling: "404-page"`. **No routes
+  yet** — deploys to `ygb-marketing.<subdomain>.workers.dev` until phase 3 adds
+  the apex routes (and removes `yourbuddy.golf` from `apps/web/wrangler.jsonc`).
+- `turbo.json` needs no change — `build` already outputs `dist/**`; `typecheck`
+  runs `astro check`.
+- `.github/workflows/deploy.yml`: `marketing` paths-filter + job (build → deploy
+  → optional health check gated on a `MARKETING_URL` repo var).
+- Scripts: `pnpm --filter marketing dev` (:4321), root `pnpm deploy:marketing`.
+- Present so far: `/` (hero + 3-card teaser), `/privacy`, `/terms` (both stubs),
+  `/404`, `robots.txt` (AI crawlers allowed), `favicon.svg`. `og.png` referenced
+  by `BaseLayout` but not yet created.
 
 ## Domain reshuffle
 
@@ -133,8 +141,9 @@ Phases 1–4 do not depend on the payment work and can ship first.
    new custom domain)*. `ygb-web` now routes both the apex and
    `app.yourbuddy.golf`; CORS, `metadataBase`, mobile `webUrl` updated. Verify
    the app + sync + search on `app.yourbuddy.golf` once it deploys.
-2. **Scaffold** `sites/marketing` — workspace, turbo, deploy job, blank Astro
-   site live on a temp route.
+2. **Scaffold** `sites/marketing` — workspace, deploy job, minimal Astro site.
+   *(done — builds, `astro check` clean, wrangler dry-run OK; not yet deployed
+   because the token/AE blockers still hold all deploys.)*
 3. **Landing page** — full content, components, SEO + LLM files; cut the apex
    over to marketing.
 4. **`/privacy`, `/terms`, `/welcome`** (welcome stubbed until step 5).

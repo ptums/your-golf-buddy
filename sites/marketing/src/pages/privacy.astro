@@ -1,0 +1,38 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Privacy — Your Golf Buddy"
+  description="Your Golf Buddy has no accounts and collects no personal data. Your rounds are stored on your device."
+  path="/privacy"
+>
+  <main class="mx-auto max-w-2xl px-6 py-16 prose prose-slate">
+    <h1>Privacy</h1>
+    <p>Last updated {new Date().getFullYear()}. This page is a work in progress.</p>
+    <p>
+      Your Golf Buddy has no user accounts. It never asks for your name, email
+      address, or a password. The rounds, courses, and notes you enter are stored
+      locally on your device.
+    </p>
+    <h2>Cloud sync (optional, paid)</h2>
+    <p>
+      If you buy the Golf Buddy Pass and turn on sync, your rounds are copied to
+      our server so you can use them on another device. That data is tied to a
+      random identifier generated on your device, not to any personal
+      information. You can delete all synced data at any time from the app's
+      settings.
+    </p>
+    <h2>This site</h2>
+    <p>
+      yourbuddy.golf is a static site. It sets no cookies and runs no analytics
+      or third-party trackers.
+    </p>
+    <h2>Payments</h2>
+    <p>
+      The Golf Buddy Pass is sold through Stripe. Stripe processes your payment
+      details; we never see your card number. See Stripe's privacy policy for how
+      they handle that data.
+    </p>
+  </main>
+</BaseLayout>

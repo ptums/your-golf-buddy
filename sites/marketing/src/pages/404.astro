@@ -1,0 +1,20 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Page not found — Your Golf Buddy"
+  description="That page doesn't exist."
+  path="/404"
+>
+  <main class="mx-auto flex max-w-5xl flex-col items-center gap-4 px-6 py-32 text-center">
+    <h1 class="text-3xl font-bold text-slate-900">Page not found</h1>
+    <p class="text-slate-600">That page doesn't exist.</p>
+    <a
+      href="/"
+      class="rounded-lg bg-[var(--color-brand)] px-5 py-3 font-semibold text-white hover:bg-[var(--color-brand-dark)]"
+    >
+      Back home
+    </a>
+  </main>
+</BaseLayout>

@@ -1,0 +1,19 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* Brand tokens — mirror apps/web (Tailwind v4, amber ground + orange accent). */
+@theme {
+  --color-brand: #f97316;
+  --color-brand-dark: #ea580c;
+  --color-ground: #fffbeb;
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: var(--color-ground);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+}

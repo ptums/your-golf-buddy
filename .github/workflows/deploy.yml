@@ -42,6 +42,7 @@ jobs:
       web: ${{ steps.filter.outputs.web }}
       profile-sync: ${{ steps.filter.outputs.profile-sync }}
       course-ls: ${{ steps.filter.outputs.course-ls }}
+      marketing: ${{ steps.filter.outputs.marketing }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -62,6 +63,10 @@ jobs:
               - '.github/workflows/deploy.yml'
               - 'pnpm-lock.yaml'
               - 'services/course-ls/**'
+            marketing:
+              - '.github/workflows/deploy.yml'
+              - 'pnpm-lock.yaml'
+              - 'sites/marketing/**'
 
   profile-sync:
     needs: changes
@@ -142,6 +147,35 @@ jobs:
           # moves to https://app.yourbuddy.golf once the apex is handed to the
           # Astro site (docs/marketing-site.md phase 3). Override with WEB_URL.
           url="${{ vars.WEB_URL || 'https://yourbuddy.golf' }}/"
+          for i in $(seq 1 10); do
+            code=$(curl -fsS --max-time 15 -o /dev/null -w '%{http_code}' "$url" || true)
+            [ "$code" = "200" ] && { echo "OK $url"; exit 0; }
+            echo "try $i: HTTP $code"; sleep 6
+          done
+          echo "::error::$url not returning 200 after deploy"; exit 1
+
+  marketing:
+    needs: changes
+    if: needs.changes.outputs.marketing == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build (Astro)
+        run: pnpm --filter marketing build
+      - name: Deploy
+        run: pnpm --filter marketing exec wrangler deploy
+      - name: Health check
+        run: |
+          # No custom route until docs/marketing-site.md phase 3 — until then the
+          # site is only on workers.dev. Set MARKETING_URL to check it.
+          url="${{ vars.MARKETING_URL }}"
+          [ -z "$url" ] && { echo "MARKETING_URL not set — skipping health check"; exit 0; }
           for i in $(seq 1 10); do
             code=$(curl -fsS --max-time 15 -o /dev/null -w '%{http_code}' "$url" || true)
             [ "$code" = "200" ] && { echo "OK $url"; exit 0; }
