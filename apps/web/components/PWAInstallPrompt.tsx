@@ -66,31 +66,25 @@ export default function PWAInstallPrompt() {
   if (!showInstallPrompt) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50">
-      <div className="bg-white border-2 border-orange-300 rounded-lg p-4 shadow-lg">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <h3 className="text-sm font-medium text-slate-800">
-              Install Golf Buddy
-            </h3>
-            <p className="text-xs text-slate-600 mt-1">
-              Add to your home screen for quick access
-            </p>
-          </div>
-          <div className="flex space-x-2">
-            <button
-              onClick={() => setShowInstallPrompt(false)}
-              className="px-3 py-1 text-xs text-slate-500 hover:text-slate-700"
-            >
-              Not now
-            </button>
-            <button
-              onClick={handleInstallClick}
-              className="px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 transition-colors"
-            >
-              Install
-            </button>
-          </div>
+    <div className="fixed bottom-4 left-1/2 z-50 w-full max-w-[400px] -translate-x-1/2 px-4">
+      <div className="bs-box p-4">
+        <p className="font-serif text-[17px] font-semibold">Install Your Golf Buddy</p>
+        <p className="bs-note mb-3 mt-1 text-[13px]">
+          Add it to your home screen — it runs offline like a normal app.
+        </p>
+        <div className="flex gap-[10px]">
+          <button
+            onClick={() => setShowInstallPrompt(false)}
+            className="bs-key h-11 min-h-0 flex-1 text-[14px]"
+          >
+            Not now
+          </button>
+          <button
+            onClick={handleInstallClick}
+            className="bs-key bs-key-ink h-11 min-h-0 flex-1 text-[14px]"
+          >
+            Install
+          </button>
         </div>
       </div>
     </div>

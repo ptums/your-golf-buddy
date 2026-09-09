@@ -62,35 +62,15 @@ export default function SyncNotification() {
 
   if (!kind) return null;
 
-  const content: Record<Kind, { icon: string; text: string; className: string }> =
-    {
-      syncing: {
-        icon: "🔄",
-        text: "Syncing to cloud...",
-        className: "bg-blue-500 text-white",
-      },
-      success: {
-        icon: "✅",
-        text: "Sync completed",
-        className: "bg-green-500 text-white",
-      },
-      error: {
-        icon: "❌",
-        text: "Sync failed",
-        className: "bg-red-500 text-white",
-      },
-    };
-
-  const c = content[kind];
+  const text: Record<Kind, string> = {
+    syncing: "Syncing…",
+    success: "Synced",
+    error: "Sync issue · see Settings",
+  };
 
   return (
-    <div
-      className={`fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg transition-all duration-300 ${c.className}`}
-    >
-      <div className="flex items-center space-x-2">
-        <span className="text-lg">{c.icon}</span>
-        <span className="text-sm font-medium">{c.text}</span>
-      </div>
+    <div className="bs-box fixed bottom-4 left-1/2 -translate-x-1/2 px-4 py-[10px]">
+      <span className="bs-rail bs-rail-ink">{text[kind]}</span>
     </div>
   );
 }

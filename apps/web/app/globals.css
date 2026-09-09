@@ -1,14 +1,273 @@
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────────────────────────────────────
+   Broadsheet — newsprint set for the web. Design handoff: "Your Golf Buddy —
+   round entry, rounds list, and outdoor legibility."
+
+   Built for a phone held at arm's length in direct sun by someone wearing a
+   golf glove and tinted sunglasses:
+   - light ground only (no dark mode — a dark panel becomes a grey mirror in sun)
+   - every state survives greyscale; colour only ever reinforces
+   - 44px minimum hit target; keys are 52–78px
+   - Source Serif 4 for everything, self-hosted so it works offline
+   ──────────────────────────────────────────────────────────────────────── */
+
+@font-face {
+  font-family: "Source Serif 4";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/source-serif-4.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Source Serif 4";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/source-serif-4-italic.woff2") format("woff2");
+}
+
+@theme {
+  --color-paper: #f3f2f2;
+  --color-surface: #eae9e9;
+  --color-ink: #201e1d;
+  --color-cyan: #0088b0;
+  --color-cyan-ink: #006786;
+  --color-magenta: #d6006c;
+  --color-magenta-ink: #aa0b56;
+  --color-n300: #d7d3d3;
+  --color-n400: #bab6b6;
+  --color-n500: #9b9797;
+  --color-n800: #444141;
+  --color-n900: #2d2b2b;
+
+  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+}
+
+/* Runtime-swappable role vars. Glare mode remaps them app-wide (see below).
+   Component classes read these, never the raw @theme colours. */
+:root {
+  --bs-bg: var(--color-paper);
+  --bs-surface: var(--color-surface);
+  --bs-ink: var(--color-ink);
+  --bs-accent: var(--color-cyan); /* network / caret only */
+  --bs-state: var(--color-magenta); /* state + score-vs-par, always on a fill */
+  --bs-min-key: 52px;
+  --bs-type-scale: 1;
+}
+
+/* Glare mode: ink and paper only, flatter fills, bigger type, taller keys.
+   Set data-glare="on" on <html> (GlareProvider). "auto" resolves to on/off
+   in JS before paint, so only "on" needs a rule here. */
+:root[data-glare="on"] {
+  --bs-surface: var(--color-paper);
+  --bs-accent: var(--color-ink);
+  --bs-state: var(--color-ink);
+  --bs-min-key: 60px;
+  --bs-type-scale: 1.15;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bs-bg);
+  color: var(--bs-ink);
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  line-height: 1.5;
+  background: var(--bs-bg);
+  color: var(--bs-ink);
+  font-size: calc(15px * var(--bs-type-scale));
 }
 
-.container {
-  @apply flex justify-between;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  margin: 0;
 }
 
-.orange-marble-base {
-  @apply rounded-full flex items-center justify-center font-bold text-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2;
+:focus {
+  outline: none;
+}
+:focus-visible {
+  outline: 2px solid var(--bs-accent);
+  outline-offset: 2px;
+}
+::selection {
+  background: color-mix(in srgb, var(--color-cyan) 28%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* ── Header furniture ──────────────────────────────────────────────────── */
+.bs-rule {
+  height: 4px;
+  background: var(--bs-ink);
+}
+.bs-rule-thin {
+  height: 1.5px;
+  background: var(--bs-ink);
+}
+.bs-rail {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: calc(12px * var(--bs-type-scale));
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-n800);
+}
+:root[data-glare="on"] .bs-rail {
+  color: var(--bs-ink);
+}
+.bs-rail-ink {
+  color: var(--bs-ink);
+}
+/* Corrections §3: network status ships as ink at rail weight, not cyan —
+   cyan at 3.7:1 is the one element that genuinely disappears outdoors. */
+.bs-rail-net {
+  color: var(--bs-ink);
+}
+
+.bs-sect {
+  display: block;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: calc(12px * var(--bs-type-scale));
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-n800);
+  margin-bottom: 10px;
+}
+:root[data-glare="on"] .bs-sect {
+  color: var(--bs-ink);
+}
+
+.bs-note {
+  font-family: var(--font-serif);
+  font-size: calc(14px * var(--bs-type-scale));
+  line-height: 1.45;
+  color: var(--bs-ink);
+}
+
+/* ── Keys — every control is a "key", never a rounded button ────────────── */
+.bs-key {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 2px;
+  border: 1.5px solid var(--bs-ink);
+  background: var(--bs-surface);
+  color: var(--bs-ink);
+  cursor: pointer;
+  min-height: var(--bs-min-key);
+  text-decoration: none;
+  transition: background-color 120ms ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+.bs-key:hover {
+  background: var(--color-n300);
+}
+.bs-key:active {
+  background: var(--color-n400);
+}
+.bs-key:disabled,
+.bs-key[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+:root[data-glare="on"] .bs-key:hover,
+:root[data-glare="on"] .bs-key:active {
+  background: var(--color-n300);
+}
+
+/* Selected: inverts to ink, carries a magenta bar on the top edge. The fill
+   carries the state; the bar is decoration (corrections §4). */
+.bs-key-on {
+  background: var(--bs-ink);
+  color: var(--bs-bg);
+  box-shadow: inset 0 6px 0 var(--bs-state);
+}
+.bs-key-on:hover,
+.bs-key-on:active {
+  background: var(--color-n900);
+}
+
+/* Solid ink key — primary actions and destructive confirm. */
+.bs-key-ink {
+  background: var(--bs-ink);
+  color: var(--bs-bg);
+}
+.bs-key-ink:hover,
+.bs-key-ink:active {
+  background: var(--color-n900);
+}
+
+.bs-key-quiet {
+  background: transparent;
+}
+
+/* ── Score flag — paper on a magenta fill; reads brown-grey but legible ── */
+.bs-flag {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: calc(12px * var(--bs-type-scale));
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--bs-bg);
+  background: var(--bs-state);
+  padding: 5px 9px;
+}
+:root[data-glare="on"] .bs-flag {
+  background: var(--bs-ink);
+}
+
+/* ── Bordered container — only genuinely discrete items (drill cards, key) ─ */
+.bs-box {
+  border: 1.5px solid var(--bs-ink);
+  border-radius: 2px;
+  background: var(--bs-surface);
+}
+
+/* text caret in the course field — the one place cyan is still allowed */
+.bs-caret {
+  width: 2px;
+  height: 26px;
+  background: var(--color-cyan);
+  animation: bs-blink 1.1s step-end infinite;
+}
+:root[data-glare="on"] .bs-caret {
+  background: var(--bs-ink);
+}
+@keyframes bs-blink {
+  50% {
+    opacity: 0;
+  }
 }

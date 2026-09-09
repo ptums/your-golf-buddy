@@ -1,188 +1,164 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { db } from "../lib/db";
 import { useCourseSearch } from "../lib/use-course-search";
+import ScreenHeader from "./broadsheet/ScreenHeader";
+import Key from "./broadsheet/Key";
 
-export default function NewCourseForm() {
+export default function NewCourseForm({ onCancel }: { onCancel?: () => void }) {
   const router = useRouter();
-
-  // form state
-  const [courseName, setCourseName] = useState("");
-  const [selectedRounds, setSelectedRounds] = useState<9 | 18 | null>(null);
-
-  // typeahead state
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const justPickedRef = useRef(false);
-  const { results, loading, enabled } = useCourseSearch(
-    justPickedRef.current ? "" : courseName,
-  );
-
-  // ref to auto‑focus
   const inputRef = useRef<HTMLInputElement>(null);
+  const justPicked = useRef(false);
 
-  // focus the course input on load
+  const [courseName, setCourseName] = useState("");
+  const [holes, setHoles] = useState<9 | 18 | null>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const { results, loading } = useCourseSearch(justPicked.current ? "" : courseName);
+
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      inputRef.current?.focus();
-    }
+    inputRef.current?.focus();
   }, []);
 
-  // when both name + rounds are set, wait 1.5s then save & redirect
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+  const typed = courseName.trim();
+  const suggestionsVisible =
+    showSuggestions && !justPicked.current && typed.length >= 2;
 
-    if (selectedRounds !== null && courseName.trim() !== "") {
-      const handle = setTimeout(async () => {
-        if (!db) {
-          console.error("Database not available");
-          return;
-        }
-
-        // Create the Course record
-        const profileId = localStorage.getItem("golf_buddy_profile_id");
-        if (!profileId) {
-          console.error(
-            "No profile ID found - redirecting to profile registration"
-          );
-          window.location.href = "/profile-registration";
-          return;
-        }
-
-        const courseId = await db.courses.add({
-          name: courseName.trim(),
-          rounds: selectedRounds,
-          profileId,
-        });
-
-        // Redirect to the game page
-        router.push(`/game?courseId=${courseId}`);
-      }, 1500);
-
-      return () => {
-        if (typeof window !== "undefined") {
-          clearTimeout(handle);
-        }
-      };
-    }
-  }, [selectedRounds, courseName, router]);
-
-  // button handler
-  const onRoundsClick = (r: 9 | 18) => {
-    setSelectedRounds(r);
-  };
-
-  const onChangeName = (value: string) => {
-    justPickedRef.current = false;
-    setCourseName(value);
-    setShowSuggestions(true);
-  };
-
-  const onPickSuggestion = (name: string) => {
-    justPickedRef.current = true;
+  const pick = (name: string) => {
+    justPicked.current = true;
     setCourseName(name);
     setShowSuggestions(false);
     inputRef.current?.focus();
   };
 
-  const panelVisible =
-    enabled &&
-    showSuggestions &&
-    !justPickedRef.current &&
-    courseName.trim().length >= 2;
+  const teeOff = async () => {
+    if (!typed || saving || !db) return;
+    setSaving(true);
+    let profileId: string | null = null;
+    try {
+      profileId = localStorage.getItem("golf_buddy_profile_id");
+    } catch {
+      /* private mode */
+    }
+    if (!profileId) {
+      window.location.href = "/profile-registration";
+      return;
+    }
+    const courseId = await db.courses.add({
+      name: typed,
+      rounds: holes ?? 18,
+      profileId,
+    });
+    router.push(`/game?courseId=${courseId}`);
+  };
 
-  // no games → show "Add new course" form
+  const cancel = () => (onCancel ? onCancel() : router.push("/games"));
+
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md flex flex-col">
-        <label
-          htmlFor="course"
-          className=" font-sans text-lg w-full text-left font-bold"
-        >
-          Course
-        </label>
-        <div className="relative w-full max-w-md mb-6">
-          <input
-            id="course"
-            ref={inputRef}
-            type="text"
-            autoComplete="off"
-            value={courseName}
-            onChange={(e) => onChangeName(e.target.value)}
-            onFocus={() => setShowSuggestions(true)}
-            onBlur={() => {
-              // let a click on a suggestion register first
-              setTimeout(() => setShowSuggestions(false), 150);
-            }}
-            className="w-full bg-white p-3 border-2 rounded font-sans focus:outline-none focus:border-yellow-500 text-cyan-900 font-semibold"
-          />
+    <div className="mx-auto w-full max-w-[430px]">
+      <ScreenHeader label="New round" status="Type it in" />
 
-          {panelVisible && (results.length > 0 || loading) && (
-            <ul className="absolute z-10 mt-1 w-full bg-white border-2 border-amber-200 rounded shadow-lg max-h-64 overflow-auto">
-              {loading && results.length === 0 ? (
-                <li className="px-3 py-2 text-sm text-slate-400">Searching…</li>
-              ) : (
-                results.map((r) => (
-                  <li key={r.placeId}>
-                    <button
-                      type="button"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => onPickSuggestion(r.name)}
-                      className="w-full text-left px-3 py-2 hover:bg-amber-50 focus:bg-amber-50 focus:outline-none cursor-pointer"
-                    >
-                      <span className="block font-semibold text-slate-800">
-                        {r.name}
-                      </span>
-                      {r.address && (
-                        <span className="block text-xs text-slate-500">
-                          {r.address}
-                          {typeof r.distanceKm === "number" &&
-                            ` · ${r.distanceKm} km`}
-                        </span>
-                      )}
-                    </button>
-                  </li>
-                ))
-              )}
-            </ul>
-          )}
-
-          {panelVisible && !loading && results.length === 0 && (
-            <p className="absolute z-10 mt-1 w-full bg-white border-2 border-amber-200 rounded shadow-lg px-3 py-2 text-xs text-slate-500">
-              No matching courses nearby — type the name to add it yourself.
-            </p>
-          )}
-        </div>
-
-        <div className="flex space-x-4 justify-center">
-          <button
-            onClick={() => onRoundsClick(9)}
-            disabled={!courseName.trim()}
-            className="w-20 h-20 font-bold font-sans text-4xl bg-orange-500 rounded-full disabled:opacity-80 cursor-pointer
-"
-          >
-            9
-          </button>
-          <button
-            onClick={() => onRoundsClick(18)}
-            disabled={!courseName.trim()}
-            className="w-20 h-20 font-bold font-sans text-4xl bg-orange-500 rounded-full disabled:opacity-80 cursor-pointer
-"
-          >
-            18
-          </button>
-        </div>
+      <div className="px-5 pt-[22px]">
+        <h1 className="text-[42px] leading-[0.92]">
+          Where are
+          <br />
+          you playing?
+        </h1>
       </div>
 
-      <div className="absolute bottom-6 left-0 right-0 text-center">
+      <section className="px-5 pt-[22px]">
+        <span className="bs-sect">Course</span>
+        <input
+          ref={inputRef}
+          type="text"
+          autoComplete="off"
+          value={courseName}
+          onChange={(e) => {
+            justPicked.current = false;
+            setCourseName(e.target.value);
+            setShowSuggestions(true);
+          }}
+          onFocus={() => setShowSuggestions(true)}
+          onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+          className="bs-box h-[60px] w-full px-[14px] font-serif text-[21px] font-semibold outline-none"
+          style={{ caretColor: "var(--color-cyan)" }}
+        />
+
+        {suggestionsVisible && (results.length > 0 || loading || typed.length >= 2) && (
+          <div className="mt-[10px] flex flex-col gap-[10px]">
+            {results.slice(0, 4).map((r) => (
+              <button
+                key={r.placeId}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => pick(r.name)}
+                className="bs-key h-14 justify-start px-[14px] text-[17px] font-normal"
+              >
+                {r.name}
+                {typeof r.distanceKm === "number" && (
+                  <span className="bs-rail ml-2">· {r.distanceKm} km</span>
+                )}
+              </button>
+            ))}
+            <button
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => pick(typed)}
+              className="bs-key bs-key-quiet h-14 justify-start border-dashed px-[14px] text-[17px] font-normal"
+            >
+              Use “{typed}” as typed
+            </button>
+          </div>
+        )}
+
+        <p className="bs-note mt-3">
+          No signal? Suggestions vanish, the field stays. You never wait on the
+          network to tee off.
+        </p>
+      </section>
+
+      <section className="px-5 pt-6">
+        <span className="bs-sect">Holes</span>
+        <div className="flex gap-[10px]">
+          {([9, 18] as const).map((n) => (
+            <Key
+              key={n}
+              variant={holes === n ? "on" : "default"}
+              onClick={() => setHoles(n)}
+              className="h-[76px] flex-1 text-[26px]"
+              aria-pressed={holes === n}
+            >
+              {n}
+            </Key>
+          ))}
+        </div>
+      </section>
+
+      <div className="mt-7 flex gap-[10px] border-t-4 border-[var(--bs-ink)] px-5 pb-3 pt-4">
+        <Key onClick={cancel} className="h-[66px] w-24 text-[16px]">
+          Cancel
+        </Key>
+        <Key
+          variant="ink"
+          onClick={teeOff}
+          disabled={!typed || saving}
+          className="h-[66px] flex-1 text-[18px]"
+        >
+          {saving ? "Starting…" : "First tee →"}
+        </Key>
+      </div>
+
+      <p className="px-5 pb-6 text-center">
         <Link
           href="/how-to"
-          className="text-sm text-slate-700 underline underline-offset-2 hover:text-slate-900"
+          className="bs-rail underline underline-offset-2"
+          style={{ color: "var(--color-n800)" }}
         >
           How to use Your Golf Buddy
         </Link>
-      </div>
+      </p>
     </div>
   );
 }

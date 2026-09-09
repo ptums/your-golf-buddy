@@ -5,6 +5,7 @@ import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import SyncManagerInitializer from "@/components/SyncManagerInitializer";
 import SyncNotification from "@/components/SyncNotification";
 import ErrorLogger from "@/components/ErrorLogger";
+import { GLARE_INIT_SCRIPT } from "@/lib/glare";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://app.yourbuddy.golf"),
@@ -39,9 +40,8 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  themeColor: "#f3f2f2",
 };
-
-export const themeColor = "#F97316";
 
 export default function RootLayout({
   children,
@@ -50,9 +50,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="font-sans bg-amber-50 text-slate-950">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: GLARE_INIT_SCRIPT }} />
+      </head>
+      <body className="bg-[var(--bs-bg)] text-[var(--bs-ink)] font-serif">
         <Header />
-        <main className="pt-0">{children}</main>
+        <main>{children}</main>
         <PWAInstallPrompt />
         <SyncManagerInitializer />
         <SyncNotification />

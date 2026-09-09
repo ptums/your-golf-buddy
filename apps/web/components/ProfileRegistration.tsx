@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { profileDB } from "@/lib/profile-db";
 import { cloudSync, extractProfileKey } from "@/lib/cloud-sync";
+import ScreenHeader from "@/components/broadsheet/ScreenHeader";
+import Key from "@/components/broadsheet/Key";
 
 export default function ProfileRegistration() {
   const router = useRouter();
@@ -16,6 +18,46 @@ export default function ProfileRegistration() {
   const [showRestore, setShowRestore] = useState(false);
   const [restoreKey, setRestoreKey] = useState("");
   const [restoreError, setRestoreError] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      if (!profileDB) return;
+      try {
+        const profiles = await profileDB.getAllProfiles();
+        if (profiles.length > 0) {
+          setHasProfile(true);
+          localStorage.setItem("golf_buddy_profile_id", profiles[0].id);
+          localStorage.setItem("golf_buddy_username", profiles[0].username);
+        }
+      } catch (e) {
+        console.error("Error checking existing profile:", e);
+      }
+    })();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!username.trim() || !dob) {
+      setError("Add a username and your date of birth.");
+      return;
+    }
+    if (!profileDB) {
+      setError("Profile storage isn't available.");
+      return;
+    }
+    setIsLoading(true);
+    setError("");
+    try {
+      const profile = await profileDB.createProfile({ username: username.trim(), dob });
+      localStorage.setItem("golf_buddy_profile_id", profile.id);
+      localStorage.setItem("golf_buddy_username", profile.username);
+      router.push("/games");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't create your profile.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleRestore = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,68 +73,8 @@ export default function ProfileRegistration() {
     setIsLoading(true);
     try {
       const name = await cloudSync.restoreProfile(restoreKey);
-      if (name) {
-        router.push("/games");
-      } else {
-        setRestoreError("No data found for that key. Check it and try again.");
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    // Check if user already has a profile
-    checkExistingProfile();
-  }, []);
-
-  const checkExistingProfile = async () => {
-    if (!profileDB) return;
-
-    try {
-      const profiles = await profileDB.getAllProfiles();
-      if (profiles.length > 0) {
-        setHasProfile(true);
-        // Store the profile ID in localStorage for easy access
-        localStorage.setItem("golf_buddy_profile_id", profiles[0].id);
-        localStorage.setItem("golf_buddy_username", profiles[0].username);
-      }
-    } catch (error) {
-      console.error("Error checking existing profile:", error);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!username.trim() || !dob) {
-      setError("Please fill in all fields");
-      return;
-    }
-
-    if (!profileDB) {
-      setError("Profile database not available");
-      return;
-    }
-
-    setIsLoading(true);
-    setError("");
-
-    try {
-      const profile = await profileDB.createProfile({
-        username: username.trim(),
-        dob,
-      });
-
-      // Store profile info in localStorage
-      localStorage.setItem("golf_buddy_profile_id", profile.id);
-      localStorage.setItem("golf_buddy_username", profile.username);
-
-      // Redirect to games page
-      router.push("/games");
-    } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to create profile"
-      );
+      if (name) router.push("/games");
+      else setRestoreError("No data found for that key. Check it and try again.");
     } finally {
       setIsLoading(false);
     }
@@ -100,153 +82,144 @@ export default function ProfileRegistration() {
 
   if (hasProfile) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-amber-50">
-        <div className="w-full max-w-md text-center">
-          <div className="bg-white rounded-xl shadow-lg border-2 border-amber-200 p-8">
-            <h1 className="text-2xl font-bold text-slate-800 mb-4">
-              Welcome Back!
-            </h1>
-            <p className="text-slate-600 mb-6">
-              You already have a profile set up. Ready to play some golf?
-            </p>
-            <button
-              onClick={() => router.push("/games")}
-              className="w-full bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-orange-700 transition-colors"
-            >
-              Go to Games
-            </button>
-          </div>
+      <div className="mx-auto w-full max-w-[430px]">
+        <ScreenHeader label="Your Golf Buddy" status="On this device" />
+        <div className="px-5 pt-[22px]">
+          <h1 className="text-[42px] leading-[0.92]">Welcome back</h1>
+          <p className="bs-note mt-[10px]">Your profile is already set up here.</p>
+        </div>
+        <div className="mt-[26px] border-t-4 border-[var(--bs-ink)] px-5 pt-4">
+          <Key
+            variant="ink"
+            onClick={() => router.push("/games")}
+            className="h-[66px] w-full text-[18px]"
+          >
+            Your rounds →
+          </Key>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-amber-50">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-xl shadow-lg border-2 border-amber-200 p-8">
-          <h1 className="text-2xl font-bold text-slate-800 text-center mb-6">
-            Welcome to Golf Buddy!
-          </h1>
+    <div className="mx-auto w-full max-w-[430px]">
+      <ScreenHeader label="Your Golf Buddy" status="Setting up" />
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label
-                htmlFor="username"
-                className="block text-sm font-medium text-slate-700 mb-2"
-              >
-                Username
-              </label>
-              <input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-amber-200 rounded-lg focus:outline-none focus:border-orange-500 transition-colors"
-                placeholder="Enter your username"
-                required
-                maxLength={20}
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="dob"
-                className="block text-sm font-medium text-slate-700 mb-2"
-              >
-                Date of Birth
-              </label>
-              <input
-                id="dob"
-                type="date"
-                value={dob}
-                onChange={(e) => setDob(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-amber-200 rounded-lg focus:outline-none focus:border-orange-500 transition-colors"
-                required
-              />
-              <p className="text-xs text-slate-500 mt-1">
-                Your date of birth is stored securely and hashed for privacy.
-              </p>
-            </div>
-
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? "Creating Profile..." : "Create Profile"}
-            </button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-slate-600">
-              This creates a local profile on your device. No data is sent to
-              any server.
-            </p>
-          </div>
-
-          <div className="mt-6 border-t border-amber-200 pt-4">
-            {!showRestore ? (
-              <button
-                type="button"
-                onClick={() => setShowRestore(true)}
-                className="w-full text-sm text-slate-600 underline underline-offset-2 hover:text-slate-900"
-              >
-                Already use Your Golf Buddy? Restore with your profile key
-              </button>
-            ) : (
-              <form onSubmit={handleRestore} className="space-y-3">
-                <label
-                  htmlFor="restoreKey"
-                  className="block text-sm font-medium text-slate-700"
-                >
-                  Profile key
-                </label>
-                <input
-                  id="restoreKey"
-                  type="text"
-                  autoComplete="off"
-                  value={restoreKey}
-                  onChange={(e) => setRestoreKey(e.target.value)}
-                  placeholder="00000000-0000-0000-0000-000000000000"
-                  className="w-full px-3 py-2 border-2 border-amber-200 rounded-lg font-mono text-sm focus:outline-none focus:border-orange-500"
-                />
-                <p className="text-xs text-slate-500">
-                  Find it under Settings → Cloud Sync on your other device.
-                </p>
-                {restoreError && (
-                  <p className="text-sm text-red-600">{restoreError}</p>
-                )}
-                <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="flex-1 bg-orange-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors"
-                  >
-                    {isLoading ? "Restoring…" : "Restore"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowRestore(false);
-                      setRestoreError("");
-                    }}
-                    className="text-sm text-slate-500 px-2"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
+      <div className="px-5 pt-[22px]">
+        <h1 className="text-[42px] leading-[0.92]">
+          Set up your
+          <br />
+          profile
+        </h1>
+        <p className="bs-note mt-[10px]">
+          A username and your date of birth — that&apos;s it. No email, no
+          password. It just labels the data on this device.
+        </p>
       </div>
+
+      <form onSubmit={handleSubmit}>
+        <section className="px-5 pt-[22px]">
+          <label htmlFor="username" className="bs-sect">
+            Username
+          </label>
+          <input
+            id="username"
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="bs-box h-[56px] w-full px-[14px] font-serif text-[18px] outline-none"
+            style={{ caretColor: "var(--color-cyan)" }}
+            maxLength={20}
+            required
+          />
+        </section>
+
+        <section className="px-5 pt-[22px]">
+          <label htmlFor="dob" className="bs-sect">
+            Date of birth
+          </label>
+          <input
+            id="dob"
+            type="date"
+            value={dob}
+            onChange={(e) => setDob(e.target.value)}
+            className="bs-box h-[56px] w-full px-[14px] font-serif text-[18px] outline-none"
+            required
+          />
+          <p className="bs-note mt-[6px] text-[13px]">Hashed on this device for privacy.</p>
+        </section>
+
+        {error && (
+          <p className="bs-note px-5 pt-3" style={{ color: "var(--bs-state)" }}>
+            {error}
+          </p>
+        )}
+
+        <div className="mt-[26px] border-t-4 border-[var(--bs-ink)] px-5 pt-4">
+          <Key
+            type="submit"
+            variant="ink"
+            disabled={isLoading}
+            className="h-[66px] w-full text-[18px]"
+          >
+            {isLoading ? "Creating…" : "Create profile →"}
+          </Key>
+        </div>
+      </form>
+
+      <section className="px-5 pt-[22px]">
+        {!showRestore ? (
+          <button
+            type="button"
+            onClick={() => setShowRestore(true)}
+            className="bs-rail underline underline-offset-2"
+            style={{ color: "var(--color-n800)" }}
+          >
+            Already use Your Golf Buddy? Restore with your profile key
+          </button>
+        ) : (
+          <form onSubmit={handleRestore}>
+            <span className="bs-sect">Profile key</span>
+            <input
+              type="text"
+              autoComplete="off"
+              value={restoreKey}
+              onChange={(e) => setRestoreKey(e.target.value)}
+              placeholder="00000000-0000-0000-0000-000000000000"
+              className="bs-box h-[52px] w-full px-3 font-serif text-[14px] outline-none"
+              style={{ caretColor: "var(--color-cyan)" }}
+            />
+            <p className="bs-note mt-[6px] text-[13px]">
+              Find it under Settings → Move to a new phone, on your other device.
+            </p>
+            {restoreError && (
+              <p className="bs-note mt-2" style={{ color: "var(--bs-state)" }}>
+                {restoreError}
+              </p>
+            )}
+            <div className="mt-3 flex gap-[10px]">
+              <Key
+                type="submit"
+                variant="ink"
+                disabled={isLoading}
+                className="h-[56px] flex-1 text-[16px]"
+              >
+                {isLoading ? "Restoring…" : "Restore"}
+              </Key>
+              <Key
+                type="button"
+                onClick={() => {
+                  setShowRestore(false);
+                  setRestoreError("");
+                }}
+                className="h-[56px] w-24 text-[15px]"
+              >
+                Cancel
+              </Key>
+            </div>
+          </form>
+        )}
+      </section>
     </div>
   );
 }

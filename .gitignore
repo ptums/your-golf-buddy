@@ -48,3 +48,6 @@ yarn-error.log*
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# design handoff — reference only, not shipped
+design_handoff_golf_buddy_rounds/

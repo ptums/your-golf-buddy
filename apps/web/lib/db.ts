@@ -15,6 +15,8 @@ export interface Game {
   finalNote: string;
   finalScore: number;
   scores: Score[];
+  /** Set when the player taps "Finish round". Absent ⇒ in progress. */
+  completedAt?: Date | null;
 }
 
 export interface Score {
@@ -77,6 +79,13 @@ export class AppDB extends Dexie {
     this.version(8).stores({
       courses: "++id, name, rounds, profileId",
       games: "++id, date, courseId, finalNote, finalScore",
+      scores: "++id, gameId, hole, putts",
+    });
+
+    // Version 9: track round completion (unindexed — just a stored field)
+    this.version(9).stores({
+      courses: "++id, name, rounds, profileId",
+      games: "++id, date, courseId, finalNote, finalScore, completedAt",
       scores: "++id, gameId, hole, putts",
     });
   }

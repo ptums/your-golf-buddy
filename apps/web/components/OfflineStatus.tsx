@@ -2,36 +2,23 @@
 
 import { useEffect, useState } from "react";
 
+/** Shows a small ink "Offline" rail chip only when the connection drops.
+ *  Design: color/icons never carry meaning — network state is plain text. */
 export default function OfflineStatus() {
-  const [isOnline, setIsOnline] = useState(true);
+  const [offline, setOffline] = useState(false);
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    // Set initial status
-    setIsOnline(navigator.onLine);
-
-    // Add event listeners
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
+    const on = () => setOffline(false);
+    const off = () => setOffline(true);
+    setOffline(!navigator.onLine);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
     return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", off);
     };
   }, []);
 
-  return (
-    <svg
-      className={`w-6 h-6 transition-colors duration-200 ${
-        isOnline ? "text-blue-500" : "text-gray-400"
-      }`}
-      fill="currentColor"
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z" />
-    </svg>
-  );
+  if (!offline) return null;
+  return <span className="bs-rail bs-rail-ink">Offline</span>;
 }

@@ -1,371 +1,383 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { db, Score } from "@/lib/db";
-import type { Game } from "@/lib/db";
-
-import BottomSheet from "@/components/BottomSheet";
-import NavigationButton from "@/components/NavigationButton";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { db, type Game, type Score } from "@/lib/db";
 import { syncManager } from "@/lib/sync-manager";
+import ScreenHeader from "@/components/broadsheet/ScreenHeader";
+import Key from "@/components/broadsheet/Key";
+import {
+  formatDelta,
+  runningTotal,
+  scoreName,
+  scoreToPar,
+  thruCount,
+  type HoleEntry,
+} from "@/lib/score";
 
-interface ScoreEntry {
-  par: string;
-  score: string;
-  putts: number | null;
-}
+const STROKE_KEYS = [1, 2, 3, 4, 5, 6, 7, 8] as const; // 8 = "8+"
 
 function GameContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const courseId = searchParams.get("courseId") as string;
+  const courseId = useSearchParams().get("courseId");
+
   const [gameId, setGameId] = useState<number | null>(null);
-
-  // Debug gameId changes
-  const [courseName, setCourseName] = useState<string>("");
-  const [isPuttsBtn, setIsPuttsBtn] = useState<boolean>(false);
-  const [isScoreBtn, setIsScoreBtn] = useState<boolean>(false);
-  const [scoreTotal, setScoreTotal] = useState(0);
-  const [entries, setEntries] = useState<ScoreEntry[]>([]);
+  const [courseName, setCourseName] = useState("");
+  const [entries, setEntries] = useState<HoleEntry[]>([]);
   const [current, setCurrent] = useState(0);
+  const [cardOpen, setCardOpen] = useState(true);
+  const [ready, setReady] = useState(false);
+  const stripRef = useRef<HTMLDivElement>(null);
 
-  // load course, game, existing scores
+  // ── load course + game + scores ─────────────────────────────────────────
   useEffect(() => {
-    if (!courseId) return;
-
-    // Prevent multiple executions
-    let isMounted = true;
+    if (!courseId || !db) return;
+    let alive = true;
 
     (async () => {
-      if (!db) {
-        console.error("Database not available");
-        return;
-      }
+      const course = await db.courses.get(Number(courseId));
+      if (!course || !alive) return;
+      setCourseName(course.name);
 
-      const c = await db.courses.get(Number(courseId));
-      if (!c) return;
-
-      if (!isMounted) return;
-      setCourseName(c.name);
-
-      // Get the most recent game for this course, or create a new one
-      const games = await db.games
-        .where("courseId")
-        .equals(c.id!)
-        .sortBy("date");
-
-      // Reverse to get newest first
+      const games = await db.games.where("courseId").equals(course.id!).sortBy("date");
       games.reverse();
-
       let g: Game | undefined = games[0];
-
       if (!g) {
-        const newId = await db.games.add({
-          courseId: c.id!,
+        const id = await db.games.add({
+          courseId: course.id!,
           date: new Date(),
           finalNote: "",
           finalScore: 0,
           scores: [],
         });
-        g = await db.games.get(newId);
-      } else {
+        g = await db.games.get(id);
       }
+      if (!g || !alive) return;
+      setGameId(g.id!);
 
-      if (!isMounted) return;
-
-      if (g) {
-        setGameId(g.id!);
-      } else {
-        console.error(`No game object to set gameId from`);
-      }
-
-      // build entries array
-      const existing = await db.scores
-        .where("gameId")
-        .equals(g?.id ?? 0)
-        .toArray();
-
-      const recs = Array(c?.rounds ?? 0).fill(null);
-      existing.forEach(async (r) => {
-        if (r.hole != null && r.hole < recs.length) recs[r.hole] = r;
-      });
-
-      const initial = recs.map((r) => ({
-        par: r?.par ?? "",
-        score: r?.score ?? "",
-        putts: r?.putts ?? null,
+      const holes = course.rounds ?? 18;
+      const existing = await db.scores.where("gameId").equals(g.id!).toArray();
+      const slots: HoleEntry[] = Array.from({ length: holes }, () => ({
+        par: "",
+        score: "",
+        putts: null,
       }));
-
-      if (!isMounted) return;
-      setEntries(initial);
-
-      // calc initial total
-      const total = initial.reduce(
-        (sum, e) => sum + (parseInt(e.score) || 0),
-        0
-      );
-      setScoreTotal(total);
-
-      // find the last record with a par selected and set it to current
-      const lastParIndex = initial.findLastIndex((entry) => entry.par !== "");
-      if (lastParIndex !== -1) {
-        setCurrent(lastParIndex);
+      for (const r of existing) {
+        if (r.hole != null && r.hole >= 0 && r.hole < holes) {
+          slots[r.hole] = {
+            par: r.par ?? "",
+            score: r.score ?? "",
+            putts: r.putts ?? null,
+          };
+        }
       }
+      if (!alive) return;
+      setEntries(slots);
+
+      // resume at the first hole with no stroke count, else the last hole
+      const firstBlank = slots.findIndex((e) => !e.score);
+      setCurrent(firstBlank === -1 ? holes - 1 : firstBlank);
+
+      try {
+        const stored = sessionStorage.getItem(`gb_card_${g.id}`);
+        setCardOpen(stored == null ? true : stored === "1");
+      } catch {
+        /* private mode */
+      }
+      setReady(true);
     })();
 
     return () => {
-      isMounted = false;
+      alive = false;
     };
   }, [courseId]);
 
-  // enable putts buttons
+  // keep the current hole in view in the strip
   useEffect(() => {
-    if (isScoreBtn) {
-      setIsPuttsBtn(true);
-    }
-  }, [isScoreBtn]);
-
-  // upsert helper
-  const upsertScore = async (
-    idx: number,
-    partial: Partial<Pick<Score, "par" | "score" | "putts">>
-  ) => {
-    if (gameId === null || !db) return;
-
-    const existing = await db.scores
-      .where("gameId")
-      .equals(gameId)
-      .and((r) => r.hole === idx)
-      .first();
-
-    if (existing?.id) {
-      await db.scores.update(existing.id, partial);
-    } else {
-      await db.scores.add({
-        gameId,
-        hole: idx,
-        par: partial.par ?? "",
-        score: partial.score ?? "",
-        putts: partial.putts ?? 0,
-      } as Score);
-    }
-  };
-
-  // handle Par selection
-  const onParSelect = async (val: number) => {
-    const updated = [...entries];
-    updated[current].par = String(val);
-    setEntries(updated);
-    await upsertScore(current, { par: String(val) });
-  };
-
-  // handle Score selection
-  const onScoreSelect = async (val: number) => {
-    const prev = parseInt(entries[current].score) || 0;
-    const updated = [...entries];
-    updated[current].score = String(val);
-    setEntries(updated);
-    await upsertScore(current, { score: String(val) });
-
-    const delta = val - prev;
-    const newTotal = scoreTotal + delta;
-    setScoreTotal(newTotal);
-
-    setIsScoreBtn(true);
-    if (gameId !== null && db) {
-      try {
-        // First, let's check what the current game looks like
-        const currentGame = await db.games.get(gameId);
-
-        if (!currentGame) {
-          console.error(`Game with ID ${gameId} not found!`);
-          return;
-        }
-
-        // Now try to update
-        await db.games.update(gameId, { finalScore: newTotal });
-      } catch (error) {
-        console.error(`Failed to update game ${gameId}:`, error);
-      }
-    } else {
-      console.error(`Cannot update game: gameId=${gameId}, db=${!!db}`);
-    }
-
-    const handle = window.setTimeout(async () => {
-      // 1) create the Course record
-
-      setIsPuttsBtn(false);
-      setIsScoreBtn(false);
-      if (current < holes - 1) {
-        setCurrent(current + 1);
-      }
-    }, 1100);
-
-    return () => clearTimeout(handle);
-  };
-
-  // handle Putts selection
-  const onPutts = async (val: number) => {
-    const updated = [...entries];
-    updated[current].putts = val;
-    setEntries(updated);
-    await upsertScore(current, { putts: val });
-  };
+    if (!cardOpen) return;
+    const el = stripRef.current?.querySelector<HTMLElement>(
+      `[data-hole="${current}"]`,
+    );
+    el?.scrollIntoView({ block: "nearest", inline: "center" });
+  }, [current, cardOpen, ready]);
 
   const holes = entries.length;
+  const entry: HoleEntry = entries[current] ?? { par: "", score: "", putts: null };
+
+  const total = useMemo(() => runningTotal(entries), [entries]);
+  const thru = useMemo(() => thruCount(entries), [entries]);
+  const delta = useMemo(() => scoreToPar(entries), [entries]);
+  const flag = scoreName(parseInt(entry.score, 10), parseInt(entry.par, 10));
+
+  // ── persistence ─────────────────────────────────────────────────────────
+  const upsert = useCallback(
+    async (idx: number, partial: Partial<Pick<Score, "par" | "score" | "putts">>) => {
+      if (gameId == null || !db) return;
+      const row = await db.scores
+        .where("gameId")
+        .equals(gameId)
+        .and((r) => r.hole === idx)
+        .first();
+      if (row?.id) {
+        await db.scores.update(row.id, partial);
+      } else {
+        await db.scores.add({
+          gameId,
+          hole: idx,
+          par: partial.par ?? "",
+          score: partial.score ?? "",
+          putts: partial.putts ?? 0,
+        } as Score);
+      }
+    },
+    [gameId],
+  );
+
+  const setField = useCallback(
+    (field: keyof HoleEntry, value: string | number | null) => {
+      setEntries((prev) => {
+        const next = prev.map((e, i) => (i === current ? { ...e, [field]: value } : e));
+        if (field === "score" && gameId != null && db) {
+          void db.games.update(gameId, { finalScore: runningTotal(next) });
+        }
+        return next;
+      });
+      const stored =
+        field === "putts" ? (value == null ? 0 : Number(value)) : String(value ?? "");
+      void upsert(current, { [field]: stored } as Partial<Score>);
+    },
+    [current, gameId, upsert],
+  );
+
+  // toggle a single-select key: tapping the selected value clears it
+  const toggle = (field: "par" | "score" | "putts", raw: number) => {
+    if (field === "putts") {
+      setField("putts", entry.putts === raw ? null : raw);
+    } else {
+      setField(field, entry[field] === String(raw) ? "" : String(raw));
+    }
+  };
+
+  const toggleCard = () => {
+    setCardOpen((v) => {
+      const next = !v;
+      try {
+        if (gameId != null) sessionStorage.setItem(`gb_card_${gameId}`, next ? "1" : "0");
+      } catch {
+        /* private mode */
+      }
+      return next;
+    });
+  };
+
+  const finish = async () => {
+    if (gameId != null && db) {
+      await db.games.update(gameId, { finalScore: total, completedAt: new Date() } as Partial<Game>);
+    }
+    try {
+      await syncManager?.triggerGameCompletionSync();
+    } catch {
+      /* offline — sync-manager queues it */
+    }
+    router.push("/games");
+  };
+
+  if (!ready) {
+    return (
+      <>
+        <ScreenHeader label={courseName || "Round"} status="Loading" />
+        <p className="bs-note px-5 pt-6">Opening your round…</p>
+      </>
+    );
+  }
+
+  const onLastHole = current === holes - 1;
 
   return (
-    <>
-      <div className="flex flex-col h-full">
-        {/* header */}
-        <div className="container text-slate-950 p-6">
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">
-            {courseName}
-          </h1>
-          <p className="text-lg font-semibold text-slate-700">
-            <span className="font-bold">Score:</span> {scoreTotal}
-          </p>
-        </div>
-        {/* single card */}
-        <div className="flex-1 p-6 flex flex-col justify-center">
-          <div className="bg-white rounded-xl p-8 shadow-lg border-2 border-amber-100 relative">
-            <p className="float-right font-bold text-xl text-slate-800">
-              {current + 1}
-            </p>
-            {/* Par row */}
-            <div className="mb-8">
-              <span className="block text-slate-900 mb-4 font-bold text-lg">
-                Par
-              </span>
-              <div className="flex space-x-3">
-                {[3, 4, 5].map((n) => {
-                  const active = entries[current]?.par === String(n);
+    <div className="mx-auto w-full max-w-[430px]">
+      <ScreenHeader label={courseName} status="Saved · offline" />
 
-                  return (
-                    <button
-                      key={n}
-                      onClick={() => onParSelect(n)}
-                      className={`
-                      orange-marble-base w-16 h-16
-                      ${
-                        active
-                          ? "bg-orange-600 text-white shadow-lg"
-                          : "bg-orange-100 text-slate-800 hover:bg-orange-200 border-2 border-orange-200"
-                      }
-                    `}
-                      aria-label={`Select par ${n}`}
-                    >
-                      {n}
-                    </button>
-                  );
-                })}
-              </div>
+      {/* Scorecard bar */}
+      <div className="px-5 pt-[14px]">
+        <button
+          onClick={toggleCard}
+          className="bs-key h-14 w-full justify-between px-4 text-[15px]"
+          aria-expanded={cardOpen}
+        >
+          <span>Scorecard · thru {thru}</span>
+          <span className="flex items-center gap-3">
+            {total}
+            {thru > 0 && (
+              <span style={{ color: "var(--bs-state)" }}>{formatDelta(delta)}</span>
+            )}
+            <span className="text-[13px]">{cardOpen ? "▲" : "▼"}</span>
+          </span>
+        </button>
+      </div>
+
+      {/* Scorecard strip */}
+      {cardOpen && (
+        <div className="mb-[2px] border-b-[1.5px] border-[var(--bs-ink)] pt-3">
+          <div className="flex items-stretch overflow-hidden pb-2">
+            <div className="flex w-11 flex-none flex-col justify-between pl-5">
+              <span className="bs-rail py-[5px]">Hole</span>
+              <span className="bs-rail py-[5px]">Par</span>
+              <span className="bs-rail py-[9px]">You</span>
             </div>
-            {/* Putts row */}
-            <div className="mb-8">
-              <span className="block text-slate-900 mb-4 font-bold text-lg">
-                Putts
-              </span>
-              <div className="flex space-x-3">
-                {[1, 2, 3, 4, 5].map((n) => {
-                  const active = entries[current]?.putts === n;
-
-                  return (
-                    <button
-                      key={n}
-                      onClick={() => {
-                        onPutts(n);
-                      }}
-                      disabled={!entries[current]?.par}
-                      className={`
-                      orange-marble-base w-16 h-16 
-                      ${
-                        isPuttsBtn || entries[current]?.par
-                          ? active
-                            ? "bg-orange-600 text-white shadow-lg"
-                            : "bg-orange-100 text-slate-800 hover:bg-orange-200 border-2 border-orange-200"
-                          : "bg-slate-100 border-2 border-slate-200 text-slate-400 opacity-50 cursor-not-allowed"
+            <div ref={stripRef} className="flex flex-1 gap-[2px] overflow-x-auto">
+              {entries.map((e, i) => {
+                const isCurrent = i === current;
+                const beyond = i > Math.max(thru, current);
+                const s = parseInt(e.score, 10);
+                return (
+                  <button
+                    key={i}
+                    data-hole={i}
+                    onClick={() => setCurrent(i)}
+                    className="w-12 flex-none text-center"
+                    style={{ opacity: beyond ? 0.45 : 1 }}
+                    aria-label={`Edit hole ${i + 1}`}
+                  >
+                    <div
+                      className="py-[5px] text-[13px]"
+                      style={
+                        isCurrent
+                          ? { color: "var(--bs-state)", fontWeight: 600 }
+                          : undefined
                       }
-                    `}
-                      aria-label={`Select ${n} putts`}
                     >
-                      {n}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            {/* Score row */}
-            <div>
-              <span className="block text-slate-900 mb-4 font-bold text-lg">
-                Score
-              </span>
-              <div className="flex flex-wrap gap-2">
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => {
-                  const active = entries[current]?.score === String(n);
-
-                  return (
-                    <button
-                      key={n}
-                      onClick={() => onScoreSelect(n)}
-                      className={`
-                      orange-marble-base w-16 h-16
-                      ${
-                        entries[current]?.putts
-                          ? active
-                            ? "bg-orange-600 text-white shadow-lg"
-                            : "bg-orange-100 text-slate-800 hover:bg-orange-200 border-2 border-orange-200"
-                          : "bg-slate-100 border-2 border-slate-200 text-slate-400 opacity-50 cursor-not-allowed"
+                      {i + 1}
+                    </div>
+                    <div
+                      className="py-[5px] text-[13px]"
+                      style={{ color: isCurrent ? "var(--bs-state)" : "var(--color-n800)" }}
+                    >
+                      {e.par || "·"}
+                    </div>
+                    <div
+                      className="py-[9px] font-serif text-[21px] font-semibold leading-none"
+                      style={
+                        isCurrent
+                          ? { background: "var(--bs-ink)", color: "var(--bs-bg)" }
+                          : s > 0
+                            ? undefined
+                            : { color: "var(--color-n500)" }
                       }
-                    `}
-                      aria-label={`Select score ${n}`}
                     >
-                      {n}
-                    </button>
-                  );
-                })}
-              </div>
+                      {s > 0 ? s : isCurrent ? "—" : "·"}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
+          <div className="bs-note px-5 pb-3 text-[13px]">
+            Scroll the card · tap any hole to edit it
+          </div>
         </div>
+      )}
 
-        {/* navigation */}
-        <div className="container bg-amber-50 p-6 flex justify-center space-x-6">
-          <NavigationButton
-            onClick={() => current > 0 && setCurrent(current - 1)}
-            disabled={current === 0}
-            direction="previous"
-          />
-          <NavigationButton
-            onClick={() => current < holes - 1 && setCurrent(current + 1)}
-            disabled={current === holes - 1}
-            direction="next"
-          />
+      {/* Hole heading */}
+      <div className="flex items-end justify-between px-5 pt-[18px]">
+        <div>
+          <h1 className="text-[46px] leading-[0.9] tracking-[-0.02em]">
+            Hole {current + 1}
+          </h1>
+          <div className="bs-rail mt-[10px]">
+            {entry.par ? `Par ${entry.par}` : "Par not set"}
+          </div>
         </div>
+        <div className="text-right">
+          <div className="font-serif text-[46px] font-semibold leading-[0.9]">{total}</div>
+          <div className="bs-rail mt-3">
+            Thru {thru} ·{" "}
+            <span style={{ color: "var(--bs-state)" }}>{formatDelta(delta)}</span>
+          </div>
+        </div>
+      </div>
 
-        {current === holes - 1 && (
-          <BottomSheet
-            label="Finish Game"
-            handleCallback={async () => {
-              // Trigger sync after game completion
+      {/* Par */}
+      <section className="px-5 pt-5">
+        <span className="bs-sect">Par</span>
+        <div className="flex gap-[10px]">
+          {[3, 4, 5].map((n) => (
+            <Key
+              key={n}
+              variant={entry.par === String(n) ? "on" : "default"}
+              onClick={() => toggle("par", n)}
+              className="h-[60px] flex-1 text-[26px]"
+              aria-pressed={entry.par === String(n)}
+            >
+              {n}
+            </Key>
+          ))}
+        </div>
+      </section>
 
-              if (syncManager) {
-                try {
-                  await syncManager.triggerGameCompletionSync();
-                  console.log("Sync triggered successfully");
-                } catch (error) {
-                  console.error("Failed to sync after game completion:", error);
-                }
-              }
-              router.push("/games");
-            }}
-            position="fixed bottom-0 left-0 bg-white/80 border-t-2 border-amber-200"
-            colorClasses="bg-orange-600 active:bg-orange-500 text-white font-semibold"
-          />
+      {/* Strokes */}
+      <section className="px-5 pt-[22px]">
+        <div className="mb-[10px] flex items-center justify-between">
+          <span className="bs-sect mb-0">Strokes</span>
+          {flag && <span className="bs-flag">{flag}</span>}
+        </div>
+        <div className="grid grid-cols-4 gap-[10px]">
+          {STROKE_KEYS.map((n) => (
+            <Key
+              key={n}
+              variant={entry.score === String(n) ? "on" : "default"}
+              onClick={() => toggle("score", n)}
+              className={`h-[70px] ${n === 8 ? "text-[22px]" : "text-[30px]"}`}
+              aria-pressed={entry.score === String(n)}
+            >
+              {n === 8 ? "8+" : n}
+            </Key>
+          ))}
+        </div>
+      </section>
+
+      {/* Putts */}
+      <section className="px-5 pt-[22px]">
+        <span className="bs-sect">Putts</span>
+        <div className="flex gap-[10px]">
+          {[1, 2, 3, 4, 5].map((n) => (
+            <Key
+              key={n}
+              variant={entry.putts === n ? "on" : "default"}
+              onClick={() => toggle("putts", n)}
+              className="h-[58px] flex-1 text-[24px]"
+              aria-pressed={entry.putts === n}
+            >
+              {n}
+            </Key>
+          ))}
+        </div>
+      </section>
+
+      {/* Hole nav */}
+      <div className="mt-[26px] flex gap-[10px] border-t-4 border-[var(--bs-ink)] px-5 pb-5 pt-4">
+        <Key
+          variant="default"
+          onClick={() => setCurrent((c) => Math.max(0, c - 1))}
+          disabled={current === 0}
+          className="h-[66px] flex-1 text-[17px]"
+        >
+          ← Hole {current}
+        </Key>
+        {onLastHole ? (
+          <Key variant="on" onClick={finish} className="h-[66px] flex-1 text-[17px]">
+            Finish round →
+          </Key>
+        ) : (
+          <Key
+            variant="on"
+            onClick={() => setCurrent((c) => Math.min(holes - 1, c + 1))}
+            className="h-[66px] flex-1 text-[17px]"
+          >
+            Hole {current + 2} →
+          </Key>
         )}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -373,12 +385,10 @@ export default function Game() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading...</p>
-          </div>
-        </div>
+        <>
+          <ScreenHeader label="Round" status="Loading" />
+          <p className="bs-note px-5 pt-6">Opening your round…</p>
+        </>
       }
     >
       <GameContent />

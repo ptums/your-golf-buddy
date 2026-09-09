@@ -6,9 +6,12 @@
   "scope": "https://app.yourbuddy.golf/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#FEF3C7",
-  "theme_color": "#F97316",
-  "categories": ["sports", "productivity"],
+  "background_color": "#f3f2f2",
+  "theme_color": "#f3f2f2",
+  "categories": [
+    "sports",
+    "productivity"
+  ],
   "lang": "en",
   "icons": [
     {

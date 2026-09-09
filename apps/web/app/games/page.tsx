@@ -1,111 +1,79 @@
 "use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { db } from "../../lib/db";
 import GamesList from "@/components/GamesList";
 import NewCourseForm from "@/components/NewCourseForm";
-import { useState, useEffect, useCallback } from "react";
-import { db } from "../../lib/db";
-import BottomSheet from "@/components/BottomSheet";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import ScreenHeader from "@/components/broadsheet/ScreenHeader";
+import Key from "@/components/broadsheet/Key";
+import GlareChip from "@/components/GlareChip";
 
 const queryClient = new QueryClient();
 
 function GamesContent() {
   const [showForm, setShowForm] = useState(false);
-  const [hasExistingGames, setHasExistingGames] = useState<boolean | null>(
-    null
-  );
+  const [hasGames, setHasGames] = useState<boolean | null>(null);
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
 
-  const getExistingGames = useCallback(async () => {
+  useEffect(() => {
     try {
-      if (!db) {
-        setHasExistingGames(false);
-        return;
-      }
-
-      const gamesCount = await db.games.count();
-      setHasExistingGames(gamesCount > 0);
-    } catch (error) {
-      console.error("Error checking existing games:", error);
-      // If there's an error, assume no games exist and show the form
-      setHasExistingGames(false);
+      setHasProfile(!!localStorage.getItem("golf_buddy_profile_id"));
+    } catch {
+      setHasProfile(false);
     }
   }, []);
 
-  // Check if user has a profile first
-  useEffect(() => {
-    const checkProfile = () => {
-      const profileId = localStorage.getItem("golf_buddy_profile_id");
-
-      if (!profileId) {
-        setHasProfile(false);
-        return;
-      }
-      setHasProfile(true);
-    };
-
-    checkProfile();
+  const checkGames = useCallback(async () => {
+    try {
+      setHasGames(db ? (await db.games.count()) > 0 : false);
+    } catch {
+      setHasGames(false);
+    }
   }, []);
 
-  // Check if there are existing games (only after profile check)
   useEffect(() => {
     if (hasProfile === false) {
-      // No profile, redirect to profile registration
       window.location.href = "/profile-registration";
       return;
     }
+    if (hasProfile === true) void checkGames();
+  }, [hasProfile, checkGames]);
 
-    if (hasProfile !== true) {
-      // Still checking profile
-      return;
-    }
-
-    getExistingGames(); // Only depend on hasProfile, not hasExistingGames
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasProfile]); // Only depend on hasProfile, not hasExistingGames
-
-  // Show loading while checking data
-  if (hasProfile === null || hasExistingGames === null) {
+  if (hasProfile == null || hasGames == null) {
     return (
-      <div className="min-h-screen bg-amber-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p className="text-gray-600 mb-4">
-            {hasProfile === null
-              ? "Checking profile..."
-              : "Checking your golf games..."}
-          </p>
-          {hasProfile === null && (
-            <button
-              onClick={() => setHasProfile(false)}
-              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-            >
-              Skip Loading
-            </button>
-          )}
-        </div>
-      </div>
+      <>
+        <ScreenHeader label="Your Golf Buddy" status="Loading" />
+        <p className="bs-note px-5 pt-6">Checking your rounds…</p>
+      </>
     );
   }
 
+  if (showForm || !hasGames) {
+    return <NewCourseForm onCancel={hasGames ? () => setShowForm(false) : undefined} />;
+  }
+
   return (
-    <>
-      {/* Show form for new players or when explicitly requested */}
-      {showForm || !hasExistingGames ? (
-        <div>
-          <NewCourseForm />
-        </div>
-      ) : (
-        <div className="relative min-h-screen bg-amber-50">
-          <GamesList />
-          <BottomSheet
-            label="New Game"
-            handleCallback={() => setShowForm(true)}
-            position="fixed bottom-0 left-0 bg-white/80 border-t-2 border-amber-200"
-            colorClasses="bg-orange-600 active:bg-orange-500 text-white font-semibold"
-          />
-        </div>
-      )}
-    </>
+    <div className="mx-auto w-full max-w-[430px]">
+      <ScreenHeader label="Your Golf Buddy" status="On this device" />
+
+      <div className="flex items-end justify-between px-5 pt-[22px]">
+        <h1 className="text-[42px] leading-[0.92]">Your rounds</h1>
+        <GlareChip />
+      </div>
+
+      <GamesList />
+
+      <div className="mt-[26px] border-t-4 border-[var(--bs-ink)] px-5 pb-5 pt-4">
+        <Key
+          variant="ink"
+          onClick={() => setShowForm(true)}
+          className="h-[66px] w-full text-[18px]"
+        >
+          New round
+        </Key>
+      </div>
+    </div>
   );
 }
 
