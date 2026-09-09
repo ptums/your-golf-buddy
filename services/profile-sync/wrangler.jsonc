@@ -13,9 +13,10 @@
     "crons": ["17 3 * * *"]
   },
   "vars": {
-    // Browsers allowed to call this API. Drop the *.workers.dev entry once the
-    // app is fully on yourbuddy.golf.
-    "CORS_ORIGINS": "https://yourbuddy.golf,https://www.yourbuddy.golf,https://ygb-web.peter-686.workers.dev,http://localhost:3002"
+    // Browsers allowed to call this API. During the marketing-site transition
+    // the app answers on both the apex and app.yourbuddy.golf; drop the apex and
+    // the *.workers.dev entry once the app is only on app.yourbuddy.golf.
+    "CORS_ORIGINS": "https://yourbuddy.golf,https://www.yourbuddy.golf,https://app.yourbuddy.golf,https://ygb-web.peter-686.workers.dev,http://localhost:3002"
   },
   "d1_databases": [
     {

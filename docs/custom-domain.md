@@ -2,9 +2,15 @@
 
 | Host | Worker |
 | ---- | ------ |
-| `yourbuddy.golf` | `ygb-web` (the app) |
+| `yourbuddy.golf`, `www.yourbuddy.golf` | `ygb-web` today → `ygb-marketing` after [marketing-site.md](marketing-site.md) phase 3 |
+| `app.yourbuddy.golf` | `ygb-web` (the app) |
 | `api.yourbuddy.golf` | `ygb-profile-sync` |
 | `courses.yourbuddy.golf` | `ygb-course-ls` |
+
+**Transition (phase 1, in progress):** `ygb-web` has routes for *both* the apex
+and `app.yourbuddy.golf`, so the app answers on either. When the Astro marketing
+site ships, the apex route moves to `ygb-marketing` and only `app.yourbuddy.golf`
+stays on `ygb-web`.
 
 Adding `routes` to a Worker **disables its `*.workers.dev` subdomain** (unless
 you also set `"workers_dev": true`). So once a Worker has a custom-domain route,
@@ -49,20 +55,21 @@ cert automatically. Push to `main` (or `pnpm deploy:services` + `pnpm deploy:web
 Then trigger a web deploy (push any change under `apps/web/`, or re-run the
 Deploy workflow) so the new endpoints are baked into the client bundle.
 
-`apps/mobile/app.json` → `expo.extra.webUrl` is `https://yourbuddy.golf`;
+`apps/mobile/app.json` → `expo.extra.webUrl` is `https://app.yourbuddy.golf`;
 rebuild the app with EAS after changing it.
 
 ## 4. Verify
 
 ```bash
 curl -sI https://yourbuddy.golf | head -1
+curl -sI https://app.yourbuddy.golf | head -1                 # same ygb-web worker
 curl -s  https://api.yourbuddy.golf/v1/health           # {"ok":true}
 curl -s  "https://courses.yourbuddy.golf/courses/search?q=pebble+beach" | head -c 80
 ```
 
-Open `https://yourbuddy.golf`, register/restore a profile, add a round,
+Open `https://app.yourbuddy.golf`, register/restore a profile, add a round,
 enable sync — confirm the network calls go to `api.yourbuddy.golf` and
-succeed. (`yourbuddy.golf` also serves the app.)
+succeed. (`yourbuddy.golf` also still serves the app until phase 3.)
 
 ## 5. Tighten (after it's confirmed working)
 

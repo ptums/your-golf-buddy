@@ -42,7 +42,7 @@ Create a token at **dash.cloudflare.com → My Profile → API Tokens** with:
 - Account · Account Settings · Read
 - User · User Details · Read
 - Zone · Workers Routes · Edit — **required.** The three Workers use
-  `custom_domain` routes (`yourbuddy.golf`, `api.`, `courses.`); wrangler lists
+  `custom_domain` routes (`yourbuddy.golf`, `app.`, `api.`, `courses.`); wrangler lists
   zone routes on every deploy once a custom domain exists, so a token without
   this scope fails with `Authentication error [code: 10000]` even though the
   script upload itself succeeds.

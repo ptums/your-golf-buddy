@@ -52,7 +52,7 @@
       "reactCompiler": true
     },
     "extra": {
-      "webUrl": "https://yourbuddy.golf",
+      "webUrl": "https://app.yourbuddy.golf",
       "eas": {
         "projectId": "REPLACE_AFTER_EAS_INIT"
       }

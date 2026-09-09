@@ -7,7 +7,7 @@ import SyncNotification from "@/components/SyncNotification";
 import ErrorLogger from "@/components/ErrorLogger";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://yourbuddy.golf"),
+  metadataBase: new URL("https://app.yourbuddy.golf"),
   title: "Your Golf Buddy",
   description: "Golf score tracking and notes app",
   manifest: "/manifest.json",

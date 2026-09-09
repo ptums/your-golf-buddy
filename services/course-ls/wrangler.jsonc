@@ -10,7 +10,7 @@
   "routes": [{ "pattern": "courses.yourbuddy.golf", "custom_domain": true }],
   "vars": {
     // Browsers allowed to call this API. curl / server-to-server is unaffected.
-    "CORS_ORIGINS": "https://yourbuddy.golf,https://www.yourbuddy.golf,https://ygb-web.peter-686.workers.dev,http://localhost:3002"
+    "CORS_ORIGINS": "https://yourbuddy.golf,https://www.yourbuddy.golf,https://app.yourbuddy.golf,https://ygb-web.peter-686.workers.dev,http://localhost:3002"
   },
   "kv_namespaces": [
     {

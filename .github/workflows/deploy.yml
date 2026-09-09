@@ -138,6 +138,9 @@ jobs:
         run: pnpm --filter web exec opennextjs-cloudflare deploy
       - name: Health check
         run: |
+          # Apex still serves ygb-web during the marketing-site transition; this
+          # moves to https://app.yourbuddy.golf once the apex is handed to the
+          # Astro site (docs/marketing-site.md phase 3). Override with WEB_URL.
           url="${{ vars.WEB_URL || 'https://yourbuddy.golf' }}/"
           for i in $(seq 1 10); do
             code=$(curl -fsS --max-time 15 -o /dev/null -w '%{http_code}' "$url" || true)

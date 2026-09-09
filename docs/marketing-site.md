@@ -35,14 +35,24 @@ The app itself moves to `app.yourbuddy.golf`.
 | `api.yourbuddy.golf` | `ygb-profile-sync` | unchanged |
 | `courses.yourbuddy.golf` | `ygb-course-ls` | unchanged |
 
+Approach: **additive**. In phase 1 `ygb-web` keeps the apex route *and* gains
+`app.yourbuddy.golf`, so the app answers on both and nothing breaks. Phase 3
+hands the apex to `ygb-marketing` and removes it from `ygb-web`.
+
 Files to change:
 
-- `apps/web/wrangler.jsonc` — route → `app.yourbuddy.golf`.
-- `sites/marketing/wrangler.jsonc` — routes → `yourbuddy.golf` + `www.yourbuddy.golf`.
-- `CORS_ORIGINS` in `services/profile-sync/wrangler.jsonc` and
-  `services/course-ls/wrangler.jsonc` — swap the apex for `https://app.yourbuddy.golf`.
-- `apps/web/app/layout.tsx` — `metadataBase` → `https://app.yourbuddy.golf`.
-- `apps/mobile/app.json` — `expo.extra.webUrl` → `https://app.yourbuddy.golf`.
+- **[phase 1, done]** `apps/web/wrangler.jsonc` — add an `app.yourbuddy.golf`
+  route alongside the apex.
+- **[phase 1, done]** `CORS_ORIGINS` in `services/profile-sync/wrangler.jsonc` and
+  `services/course-ls/wrangler.jsonc` — add `https://app.yourbuddy.golf` (apex
+  kept until phase 3).
+- **[phase 1, done]** `apps/web/app/layout.tsx` — `metadataBase` →
+  `https://app.yourbuddy.golf`.
+- **[phase 1, done]** `apps/mobile/app.json` — `expo.extra.webUrl` →
+  `https://app.yourbuddy.golf`.
+- **[phase 3]** `sites/marketing/wrangler.jsonc` — routes → `yourbuddy.golf` +
+  `www.yourbuddy.golf`; remove the apex from `apps/web/wrangler.jsonc`; drop the
+  apex from both `CORS_ORIGINS`; move the web deploy health check to `app.`.
 - GitHub repo variables `NEXT_PUBLIC_SYNC_ENDPOINT` / `NEXT_PUBLIC_COURSE_LS_ENDPOINT`
   — unchanged (api/courses stay put).
 
@@ -118,8 +128,11 @@ gates the network sync path.
 
 Phases 1–4 do not depend on the payment work and can ship first.
 
-1. **Domain reshuffle** — app → `app.yourbuddy.golf`, PWA manifest re-anchor +
-   apex redirects, verify sync + search still work.
+1. **Domain reshuffle** *(config landed; effective on the next successful
+   deploy — needs the `Zone · Workers Routes · Edit` token scope to register the
+   new custom domain)*. `ygb-web` now routes both the apex and
+   `app.yourbuddy.golf`; CORS, `metadataBase`, mobile `webUrl` updated. Verify
+   the app + sync + search on `app.yourbuddy.golf` once it deploys.
 2. **Scaffold** `sites/marketing` — workspace, turbo, deploy job, blank Astro
    site live on a temp route.
 3. **Landing page** — full content, components, SEO + LLM files; cut the apex
