@@ -54,26 +54,16 @@ export function extractProfileKey(input: string): string | null {
 }
 
 class CloudSyncService {
-  private syncInterval: NodeJS.Timeout | null = null;
-  private readonly SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
+  /** In-memory re-entrancy guard so overlapping triggers can't stack. */
+  private syncing = false;
   private readonly SYNC_BASE_URL =
     process.env.NEXT_PUBLIC_SYNC_ENDPOINT || "http://localhost:8000/api";
   private readonly DEVICE_ID_KEY = "golf_buddy_device_id";
   private readonly CURSORS_KEY = "golf_buddy_sync_cursors";
 
   constructor() {
-    this.initializeSync();
-  }
-
-  private initializeSync() {
-    if (typeof window === "undefined") return;
-
-    // Generate or retrieve device ID
-    this.ensureDeviceId();
-
-    // Check if sync is enabled
-    if (this.isSyncEnabled()) {
-      this.scheduleNextSync();
+    if (typeof window !== "undefined") {
+      this.ensureDeviceId();
     }
   }
 
@@ -111,52 +101,30 @@ class CloudSyncService {
     localStorage.setItem(this.CURSORS_KEY, JSON.stringify(cursors));
   }
 
-  private scheduleNextSync() {
-    if (this.syncInterval) {
-      clearTimeout(this.syncInterval);
-    }
-
-    const lastSync = this.getLastSyncTime();
-    const nextSync = lastSync
-      ? new Date(new Date(lastSync).getTime() + this.SYNC_INTERVAL_MS)
-      : new Date(Date.now() + this.SYNC_INTERVAL_MS);
-
-    const delay = nextSync.getTime() - Date.now();
-
-    this.syncInterval = setTimeout(() => {
-      this.performSync();
-    }, delay);
-
-    // Store next sync time for UI display
-    localStorage.setItem("golf_buddy_next_sync", nextSync.toISOString());
-  }
-
+  /**
+   * Push local changes then pull server changes. There is no background timer:
+   * the only callers are the once-per-app-open startup sync and the
+   * game-completion sync (see sync-manager.ts). Re-entrant calls are ignored.
+   */
   async performSync(): Promise<boolean> {
     if (typeof window === "undefined") return false;
     if (!this.isSyncEnabled()) return false;
+    if (this.syncing) return false;
+
+    this.syncing = true;
+    localStorage.setItem("golf_buddy_sync_status", "syncing");
+    localStorage.setItem("golf_buddy_sync_started_at", Date.now().toString());
 
     try {
-      // Set syncing status
-      localStorage.setItem("golf_buddy_sync_status", "syncing");
-
       // Always push: upserts are idempotent, and the client can't reliably
       // tell whether its local data is already on the server (a cursor-only
       // check reports "in sync" whenever both sides look empty).
-      const pushSuccess = await this.pushChanges();
-      if (!pushSuccess) {
-        throw new Error("Failed to push changes");
-      }
-
-      // Then pull anything new from the server.
-      const pullSuccess = await this.pullChanges();
-      if (!pullSuccess) {
-        throw new Error("Failed to pull changes");
-      }
+      if (!(await this.pushChanges())) throw new Error("Failed to push changes");
+      if (!(await this.pullChanges())) throw new Error("Failed to pull changes");
 
       localStorage.setItem("golf_buddy_sync_status", "success");
       this.setLastSyncTime(new Date().toISOString());
       localStorage.setItem("golf_buddy_last_success", Date.now().toString());
-      this.scheduleNextSync();
       return true;
     } catch (error) {
       console.error("Sync error:", error);
@@ -167,6 +135,12 @@ class CloudSyncService {
       );
       localStorage.setItem("golf_buddy_last_error_at", Date.now().toString());
       return false;
+    } finally {
+      this.syncing = false;
+      // Belt and braces: never leave the status pinned at "syncing".
+      if (localStorage.getItem("golf_buddy_sync_status") === "syncing") {
+        localStorage.setItem("golf_buddy_sync_status", "error");
+      }
     }
   }
 
@@ -384,18 +358,12 @@ class CloudSyncService {
   // Public API
   async enableSync(): Promise<void> {
     this.setSyncEnabled(true);
-    this.scheduleNextSync();
-
-    // Perform initial sync
-    await this.performSync();
+    await this.performSync(); // one sync now; thereafter only on app-open / game-complete
   }
 
   async disableSync(): Promise<void> {
     this.setSyncEnabled(false);
-    if (this.syncInterval) {
-      clearTimeout(this.syncInterval);
-      this.syncInterval = null;
-    }
+    localStorage.removeItem("golf_buddy_sync_status");
     localStorage.removeItem("golf_buddy_next_sync");
   }
 
@@ -468,44 +436,28 @@ class CloudSyncService {
     localStorage.setItem("golf_buddy_username", profile.username);
     this.setSyncEnabled(true);
     this.setLastSyncTime(new Date().toISOString());
-    this.scheduleNextSync();
     return profile.username;
   }
 
   getSyncStatus(): SyncStatus {
-    console.log("getSyncStatus", {
-      lastSync: this.getLastSyncTime(),
-      isEnabled: this.isSyncEnabled(),
-      isSyncing: localStorage.getItem("golf_buddy_sync_status") === "syncing",
-      lastError: localStorage.getItem("golf_buddy_last_error"),
-      nextSyncTime: localStorage.getItem("golf_buddy_next_sync"),
-    });
+    const started = Number(
+      localStorage.getItem("golf_buddy_sync_started_at") ?? 0
+    );
+    // Only report "syncing" while a run is genuinely in flight; a flag left
+    // behind by a killed tab goes stale after 30s.
+    const isSyncing =
+      localStorage.getItem("golf_buddy_sync_status") === "syncing" &&
+      Date.now() - started < 30_000;
     return {
       lastSync: this.getLastSyncTime(),
       isEnabled: this.isSyncEnabled(),
-      isSyncing: localStorage.getItem("golf_buddy_sync_status") === "syncing",
+      isSyncing,
       lastError: localStorage.getItem("golf_buddy_last_error"),
-      nextSyncTime: localStorage.getItem("golf_buddy_next_sync"),
+      nextSyncTime: null,
     };
-  }
-
-  // Cleanup
-  destroy() {
-    if (this.syncInterval) {
-      clearTimeout(this.syncInterval);
-    }
   }
 }
 
 // Export singleton instance only in browser environment
 export const cloudSync =
   typeof window !== "undefined" ? new CloudSyncService() : null;
-
-// Cleanup on page unload
-if (typeof window !== "undefined") {
-  window.addEventListener("beforeunload", () => {
-    if (cloudSync) {
-      cloudSync.destroy();
-    }
-  });
-}

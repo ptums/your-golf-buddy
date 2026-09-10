@@ -34,9 +34,13 @@ export default function SyncNotification() {
       const status = read("golf_buddy_sync_status");
       const lastSuccess = read("golf_buddy_last_success");
       const lastError = read("golf_buddy_last_error_at");
+      const startedAt = Number(read("golf_buddy_sync_started_at") ?? 0);
+      const freshlySyncing = Date.now() - startedAt < 30_000;
 
-      if (enabled && status === "syncing") {
-        show("syncing");
+      // Only ever a transient toast — a "syncing" flag left by a killed tab
+      // goes stale after 30s and is ignored.
+      if (enabled && status === "syncing" && freshlySyncing) {
+        show("syncing", 30_000);
         return;
       }
       if (lastError && lastError !== seenError.current) {
