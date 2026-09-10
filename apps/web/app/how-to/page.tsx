@@ -53,7 +53,7 @@ export default function HowToPage() {
         {steps.map((step, i) => (
           <li key={step.title} className="bs-box p-4">
             <div className="mb-1 flex items-center gap-[10px]">
-              <span className="font-serif text-[20px] font-semibold">{i + 1}</span>
+              <span className="font-sans text-[20px] font-semibold">{i + 1}</span>
               <h2 className="text-[17px]">{step.title}</h2>
             </div>
             <p className="bs-note text-[13px]">{step.body}</p>

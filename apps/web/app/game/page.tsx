@@ -260,7 +260,7 @@ function GameContent() {
                       {e.par || "·"}
                     </div>
                     <div
-                      className="flex h-[46px] items-center justify-center font-serif text-[21px] font-semibold leading-none"
+                      className="flex h-[46px] items-center justify-center font-sans text-[21px] font-semibold leading-none"
                       style={
                         isCurrent
                           ? {
@@ -303,7 +303,7 @@ function GameContent() {
           </div>
         </div>
         <div className="text-right">
-          <div className="font-serif text-[46px] font-semibold leading-[0.9]">{total}</div>
+          <div className="font-sans text-[46px] font-semibold leading-[0.9]">{total}</div>
           <div className="bs-rail mt-3">
             Thru {thru} ·{" "}
             <span style={{ color: "var(--bs-state)" }}>{formatDelta(delta)}</span>

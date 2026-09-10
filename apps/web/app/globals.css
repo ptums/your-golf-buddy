@@ -9,23 +9,10 @@
    - light ground only (no dark mode — a dark panel becomes a grey mirror in sun)
    - every state survives greyscale; colour only ever reinforces
    - 44px minimum hit target; keys are 52–78px
-   - Source Serif 4 for everything, self-hosted so it works offline
+   - system fonts only (nothing to download, instant, offline): SF Rounded on
+     Apple devices — friendly and hugely legible in sun — falling back to the
+     platform system sans (Roboto / Segoe UI) elsewhere.
    ──────────────────────────────────────────────────────────────────────── */
-
-@font-face {
-  font-family: "Source Serif 4";
-  font-style: normal;
-  font-weight: 400 600;
-  font-display: swap;
-  src: url("/fonts/source-serif-4.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Source Serif 4";
-  font-style: italic;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/source-serif-4-italic.woff2") format("woff2");
-}
 
 @theme {
   --color-paper: #f3f2f2;
@@ -41,7 +28,9 @@
   --color-n800: #444141;
   --color-n900: #2d2b2b;
 
-  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-sans:
+    ui-rounded, "SF Pro Rounded", "Hiragino Maru Gothic ProN", system-ui,
+    -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 /* Runtime-swappable role vars. Glare mode remaps them app-wide (see below).
@@ -79,7 +68,7 @@ html {
 
 body {
   margin: 0;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-weight: 400;
   line-height: 1.5;
   background: var(--bs-bg);
@@ -93,10 +82,10 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-serif);
-  font-weight: 600;
-  line-height: 1.12;
-  letter-spacing: -0.015em;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  line-height: 1.14;
+  letter-spacing: -0.01em;
   margin: 0;
 }
 
@@ -128,7 +117,7 @@ h6 {
   background: var(--bs-ink);
 }
 .bs-rail {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-weight: 600;
   font-size: calc(12px * var(--bs-type-scale));
   line-height: 1;
@@ -150,7 +139,7 @@ h6 {
 
 .bs-sect {
   display: block;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-weight: 600;
   font-size: calc(12px * var(--bs-type-scale));
   line-height: 1;
@@ -164,7 +153,7 @@ h6 {
 }
 
 .bs-note {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: calc(14px * var(--bs-type-scale));
   line-height: 1.45;
   color: var(--bs-ink);
@@ -176,9 +165,9 @@ h6 {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  font-family: var(--font-serif);
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: 0.01em;
   border-radius: 2px;
   border: 1.5px solid var(--bs-ink);
   background: var(--bs-surface);
@@ -235,7 +224,7 @@ h6 {
 .bs-flag {
   display: inline-flex;
   align-items: center;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-weight: 600;
   font-size: calc(12px * var(--bs-type-scale));
   line-height: 1;

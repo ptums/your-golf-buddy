@@ -91,13 +91,13 @@ export default function RoundRow({
           className="bs-key h-[78px] w-full justify-between px-4 font-normal"
         >
           <span className="text-left">
-            <span className="block font-serif text-[19px] font-semibold leading-[1.2]">
+            <span className="block font-sans text-[19px] font-semibold leading-[1.2]">
               {round.dateLabel}
             </span>
             <span className="bs-rail mt-[7px] block">{round.scoreLine}</span>
           </span>
           <span className="flex items-center gap-[10px]">
-            <span className="font-serif text-[26px] font-semibold leading-none">
+            <span className="font-sans text-[26px] font-semibold leading-none">
               {round.score}
             </span>
             {round.inProgress && round.delta && (

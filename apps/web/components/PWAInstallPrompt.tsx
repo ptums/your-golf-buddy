@@ -68,7 +68,7 @@ export default function PWAInstallPrompt() {
   return (
     <div className="fixed bottom-4 left-1/2 z-50 w-full max-w-[400px] -translate-x-1/2 px-4">
       <div className="bs-box p-4">
-        <p className="font-serif text-[17px] font-semibold">Install Your Golf Buddy</p>
+        <p className="font-sans text-[17px] font-semibold">Install Your Golf Buddy</p>
         <p className="bs-note mb-3 mt-1 text-[13px]">
           Add it to your home screen — it runs offline like a normal app.
         </p>

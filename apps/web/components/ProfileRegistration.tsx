@@ -127,7 +127,7 @@ export default function ProfileRegistration() {
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="bs-box h-[56px] w-full px-[14px] font-serif text-[18px] outline-none"
+            className="bs-box h-[56px] w-full px-[14px] font-sans text-[18px] outline-none"
             style={{ caretColor: "var(--color-cyan)" }}
             maxLength={20}
             required
@@ -143,7 +143,7 @@ export default function ProfileRegistration() {
             type="date"
             value={dob}
             onChange={(e) => setDob(e.target.value)}
-            className="bs-box h-[56px] w-full px-[14px] font-serif text-[18px] outline-none"
+            className="bs-box h-[56px] w-full px-[14px] font-sans text-[18px] outline-none"
             required
           />
           <p className="bs-note mt-[6px] text-[13px]">Hashed on this device for privacy.</p>
@@ -186,7 +186,7 @@ export default function ProfileRegistration() {
               value={restoreKey}
               onChange={(e) => setRestoreKey(e.target.value)}
               placeholder="00000000-0000-0000-0000-000000000000"
-              className="bs-box h-[52px] w-full px-3 font-serif text-[14px] outline-none"
+              className="bs-box h-[52px] w-full px-3 font-sans text-[14px] outline-none"
               style={{ caretColor: "var(--color-cyan)" }}
             />
             <p className="bs-note mt-[6px] text-[13px]">

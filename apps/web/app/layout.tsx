@@ -55,7 +55,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: GLARE_INIT_SCRIPT }} />
       </head>
-      <body className="bg-[var(--bs-bg)] text-[var(--bs-ink)] font-serif">
+      <body className="bg-[var(--bs-bg)] text-[var(--bs-ink)] font-sans">
         <Header />
         <main>{children}</main>
         <PWAInstallPrompt />

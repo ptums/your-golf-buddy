@@ -43,7 +43,7 @@ import { APP_URL, API_URL, CONTACT_EMAIL, PASS_ENABLED } from "../data/site";
             <div id="key-wrap" class="mt-2 hidden gap-2">
               <code
                 id="key-value"
-                class="flex-1 select-all break-all border-[1.5px] border-[var(--color-ink)] bg-[var(--color-surface)] px-2 py-2 font-serif"
+                class="flex-1 select-all break-all border-[1.5px] border-[var(--color-ink)] bg-[var(--color-surface)] px-2 py-2 font-sans"
               />
               <button
                 id="key-copy"
@@ -73,8 +73,8 @@ import { APP_URL, API_URL, CONTACT_EMAIL, PASS_ENABLED } from "../data/site";
             ].map(([h, b], i) => (
               <li class="bs-box p-5">
                 <div class="flex items-center gap-[10px]">
-                  <span class="font-serif text-[20px] font-semibold">{i + 1}</span>
-                  <p class="font-serif text-[17px] font-semibold">{h}</p>
+                  <span class="font-sans text-[20px] font-semibold">{i + 1}</span>
+                  <p class="font-sans text-[17px] font-semibold">{h}</p>
                 </div>
                 <p class="mt-1 text-[14px] text-[var(--color-n800)]">
                   {b ?? (

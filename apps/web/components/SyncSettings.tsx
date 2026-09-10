@@ -180,7 +180,7 @@ export default function SyncSettings() {
               value={passInput}
               onChange={(e) => setPassInput(e.target.value)}
               placeholder="pass key"
-              className="bs-box h-[52px] flex-1 px-3 font-serif text-[14px] outline-none"
+              className="bs-box h-[52px] flex-1 px-3 font-sans text-[14px] outline-none"
               style={{ caretColor: "var(--color-cyan)" }}
             />
             <Key onClick={savePass} className="h-[52px] w-24 text-[15px]">
@@ -197,7 +197,7 @@ export default function SyncSettings() {
             Your profile key is the only way back to these rounds. Write it down
             somewhere real — there&apos;s no login to fall back on.
           </p>
-          <div className="bs-box select-all break-all p-[14px] font-serif text-[16px] font-semibold leading-[1.5] tracking-[0.04em]">
+          <div className="bs-box select-all break-all p-[14px] font-sans text-[16px] font-semibold leading-[1.5] tracking-[0.04em]">
             {grouped(profileKey)}
           </div>
           <Key onClick={copyKey} className="mt-[10px] h-[52px] w-full text-[15px]">

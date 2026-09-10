@@ -84,7 +84,7 @@ export default function NewCourseForm({ onCancel }: { onCancel?: () => void }) {
           }}
           onFocus={() => setShowSuggestions(true)}
           onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-          className="bs-box h-[60px] w-full px-[14px] font-serif text-[21px] font-semibold outline-none"
+          className="bs-box h-[60px] w-full px-[14px] font-sans text-[21px] font-semibold outline-none"
           style={{ caretColor: "var(--color-cyan)" }}
         />
 
