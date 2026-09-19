@@ -116,6 +116,10 @@ h6 {
   height: 1.5px;
   background: var(--bs-ink);
 }
+.bs-rail {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: calc(12px * var(--bs-type-scale));
   line-height: 1.4;
   letter-spacing: 0.12em;
   text-transform: uppercase;
