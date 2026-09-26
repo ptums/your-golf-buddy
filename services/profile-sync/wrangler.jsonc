@@ -1,62 +1,79 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "ygb-profile-sync",
-  "main": "src/index.ts",
-  "compatibility_date": "2025-09-01",
-  "compatibility_flags": ["nodejs_compat"],
-  "observability": {
-    "enabled": true
-  },
-  "routes": [{ "pattern": "api.yourbuddy.golf", "custom_domain": true }],
-  // Nightly D1 -> R2 backup (03:17 UTC). Handler: scheduled() in src/index.ts.
-  "triggers": {
-    "crons": ["17 3 * * *"]
-  },
-  "vars": {
-    // Browsers allowed to call this API. app.yourbuddy.golf = the app (/sync/*);
-    // yourbuddy.golf + www = the marketing site (/pass/claim from /welcome).
-    "CORS_ORIGINS": "https://app.yourbuddy.golf,https://yourbuddy.golf,https://www.yourbuddy.golf,http://localhost:3002,http://localhost:4321",
-    // Golf Buddy Pass feature flags — both dark. See docs/pass.md for launch.
-    // PASS_ENABLED  -> POST /pass/claim issues passes (needs STRIPE_SECRET_KEY + PASS_SECRET secrets).
-    // PASS_ENFORCED -> /sync/* requires a valid X-Golf-Pass header.
-    "PASS_ENABLED": "false",
-    "PASS_ENFORCED": "false"
-  },
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "ygb-profile-sync",
-      "database_id": "c61d36d8-4c84-41ea-8046-c20afabd3fe5",
-      "migrations_dir": "migrations"
-    }
-  ],
-  // Backup target for the nightly D1 dump. Create with `pnpm cf:r2:create`.
-  "r2_buckets": [
-    {
-      "binding": "BACKUPS",
-      "bucket_name": "ygb-backups"
-    }
-  ],
-  // Client-error telemetry sink for POST /log (see src/index.ts).
-  "analytics_engine_datasets": [
-    {
-      "binding": "TELEMETRY",
-      "dataset": "ygb_client_errors"
-    }
-  ],
-  // Coarse abuse limiters. namespace_id is just a stable identifier you pick;
-  // no resource to provision. SYNC_LIMITER is keyed by the caller's profile
-  // token (src/auth.ts); LOG_LIMITER is keyed by client IP (POST /log).
-  "ratelimits": [
-    {
-      "name": "SYNC_LIMITER",
-      "namespace_id": "1001",
-      "simple": { "limit": 120, "period": 60 }
-    },
-    {
-      "name": "LOG_LIMITER",
-      "namespace_id": "1002",
-      "simple": { "limit": 30, "period": 60 }
-    }
-  ]
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "ygb-profile-sync",
+	"main": "src/index.ts",
+	"compatibility_date": "2025-09-01",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"observability": {
+		"enabled": true
+	},
+	// Also serve on ygb-profile-sync.tumultywebservices.workers.dev (see apps/web).
+	"workers_dev": true,
+	"routes": [
+		{
+			"pattern": "api.yourbuddy.golf",
+			"custom_domain": true
+		}
+	],
+	// Nightly D1 -> R2 backup (03:17 UTC). Handler: scheduled() in src/index.ts.
+	"triggers": {
+		"crons": [
+			"17 3 * * *"
+		]
+	},
+	"vars": {
+		// Browsers allowed to call this API. app.yourbuddy.golf = the app (/sync/*);
+		// yourbuddy.golf + www = the marketing site (/pass/claim from /welcome).
+		"CORS_ORIGINS": "https://app.yourbuddy.golf,https://yourbuddy.golf,https://www.yourbuddy.golf,https://ygb-web.tumultywebservices.workers.dev,https://ygb-marketing.tumultywebservices.workers.dev,http://localhost:3002,http://localhost:4321",
+		// Golf Buddy Pass feature flags — both dark. See docs/pass.md for launch.
+		// PASS_ENABLED  -> POST /pass/claim issues passes (needs STRIPE_SECRET_KEY + PASS_SECRET secrets).
+		// PASS_ENFORCED -> /sync/* requires a valid X-Golf-Pass header.
+		"PASS_ENABLED": "false",
+		"PASS_ENFORCED": "false"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "ygb-profile-sync",
+			"database_id": "c61d36d8-4c84-41ea-8046-c20afabd3fe5",
+			"migrations_dir": "migrations"
+		}
+	],
+	// Backup target for the nightly D1 dump. Create with `pnpm cf:r2:create`.
+	"r2_buckets": [
+		{
+			"binding": "BACKUPS",
+			"bucket_name": "ygb-backups"
+		}
+	],
+	// Client-error telemetry sink for POST /log (see src/index.ts).
+	"analytics_engine_datasets": [
+		{
+			"binding": "TELEMETRY",
+			"dataset": "ygb_client_errors"
+		}
+	],
+	// Coarse abuse limiters. namespace_id is just a stable identifier you pick;
+	// no resource to provision. SYNC_LIMITER is keyed by the caller's profile
+	// token (src/auth.ts); LOG_LIMITER is keyed by client IP (POST /log).
+	"ratelimits": [
+		{
+			"name": "SYNC_LIMITER",
+			"namespace_id": "1001",
+			"simple": {
+				"limit": 120,
+				"period": 60
+			}
+		},
+		{
+			"name": "LOG_LIMITER",
+			"namespace_id": "1002",
+			"simple": {
+				"limit": 30,
+				"period": 60
+			}
+		}
+	]
 }

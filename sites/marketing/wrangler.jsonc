@@ -10,6 +10,8 @@
     "directory": "./dist",
     "not_found_handling": "404-page"
   },
+  // Also serve on ygb-marketing.tumultywebservices.workers.dev (see apps/web).
+  "workers_dev": true,
   "routes": [
     { "pattern": "yourbuddy.golf", "custom_domain": true },
     { "pattern": "www.yourbuddy.golf", "custom_domain": true }

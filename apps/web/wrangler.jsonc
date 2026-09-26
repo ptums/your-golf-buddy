@@ -13,6 +13,9 @@
   },
   // The app lives at app.yourbuddy.golf. The apex + www serve the Astro
   // marketing site (sites/marketing → ygb-marketing).
+  // Also serve on ygb-web.tumultywebservices.workers.dev — a DNS-independent
+  // fallback URL. Wrangler turns workers.dev off by default when routes are set.
+  "workers_dev": true,
   "routes": [{ "pattern": "app.yourbuddy.golf", "custom_domain": true }],
   //
   // NEXT_PUBLIC_SYNC_ENDPOINT is a *build-time* value (inlined by `next build`),
