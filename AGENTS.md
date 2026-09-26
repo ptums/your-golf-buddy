@@ -95,3 +95,8 @@ Node 22, pnpm 10. `apps/mobile` uses its own `npm install` (not the workspace).
 2. If you touched the sync contract: `@ygb/shared` rebuilt, both sides updated.
 3. If you touched a `wrangler.jsonc`: ran `cf-typegen` and committed the result.
 4. Docs updated if behaviour or setup changed (`docs/deploy.md`, the app README).
+
+
+## Rules
+
+1. Do not commit or delete the `local` directory. Its for rough ideas and design specs
