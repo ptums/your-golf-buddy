@@ -15,7 +15,7 @@
   "kv_namespaces": [
     {
       "binding": "COURSE_CACHE",
-      "id": "282f917e7e1646f587d4f04c2a9a8e43"
+      "id": "6d314a1b28d54c139ca959b65ca0ad7d"
     }
   ]
   // GOOGLE_MAPS_API_KEY is a secret: `pnpm cf:secret:google`

@@ -20,7 +20,7 @@ import {
 
 const WEB_URL =
   (Constants.expoConfig?.extra as { webUrl?: string } | undefined)?.webUrl ??
-  "https://ygb-web.peter-686.workers.dev";
+  "https://app.yourbuddy.golf";
 
 const APP_HOST = safeHost(WEB_URL);
 const BRAND = "#F97316";

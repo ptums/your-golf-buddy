@@ -26,7 +26,7 @@
     {
       "binding": "DB",
       "database_name": "ygb-profile-sync",
-      "database_id": "ee1fc1f0-e3e4-439d-a427-357b09c56d5e",
+      "database_id": "c61d36d8-4c84-41ea-8046-c20afabd3fe5",
       "migrations_dir": "migrations"
     }
   ],
