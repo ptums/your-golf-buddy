@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "ygb-marketing",
+  "account_id": "8d73e4865b38da9f41a0a7189b97780b",
   "compatibility_date": "2025-09-01",
   "observability": {
     "enabled": true
