@@ -1,0 +1,34 @@
+name: Feature
+description: A new capability or a change in behaviour (goes through the full cycle in PROCESS.md)
+labels: ["feature"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Who has it, when (on the course? at home?), and why it matters now.
+    validations:
+      required: true
+  - type: dropdown
+    id: guardrail
+    attributes:
+      label: Roadmap guardrail
+      description: Which core promise does this improve? (docs/roadmap.md)
+      options:
+        - Scoring
+        - Club knowledge
+        - Practice drills
+        - None of these (explain below)
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Rough idea
+      description: Optional. What you picture. The spec (docs/specs/) will pin it down.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options: [web, profile-sync, course-ls, mobile, shared, marketing, infra]

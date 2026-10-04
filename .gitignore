@@ -51,3 +51,6 @@ yarn-error.log*
 
 # personal — reference only, not shipped
 local/*
+
+# agent worktrees (PROCESS.md)
+.worktrees/

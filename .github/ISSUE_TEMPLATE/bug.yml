@@ -1,0 +1,29 @@
+name: Bug
+description: Something is broken (small ones go through the fast lane, "fix #N")
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open app.yourbuddy.golf on iPhone Safari (installed PWA? online/offline?)
+        2. …
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options: [web, profile-sync, course-ls, mobile, shared, marketing, infra]
+  - type: textarea
+    id: device
+    attributes:
+      label: Device, browser, installed PWA or browser tab, online or offline

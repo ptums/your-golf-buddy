@@ -1,0 +1,38 @@
+name: Ticket
+description: One buildable unit of an approved spec (usually created by the orchestrator at G2)
+body:
+  - type: input
+    id: parent
+    attributes:
+      label: Parent issue
+      placeholder: "#12"
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: What and why, approach hints. Link the spec in docs/specs/.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      value: |
+        - [ ]
+        - [ ] Offline: works offline / degrades with a message / n/a
+    validations:
+      required: true
+  - type: textarea
+    id: files
+    attributes:
+      label: files_touched
+      placeholder: "apps/web/components/rounds/**"
+    validations:
+      required: true
+  - type: textarea
+    id: check
+    attributes:
+      label: How to check
+      description: Commands or click-path the reviewer and the human can run.
+    validations:
+      required: true

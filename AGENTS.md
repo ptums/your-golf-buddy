@@ -1,6 +1,75 @@
 # AGENTS.md
 
 Guidance for AI coding agents working in this repo. Humans: see `README.md`.
+Tool-agnostic: applies to the Orchestrator and every subagent. `PROCESS.md`
+says _when_ (the gated workflow); this file says _who_ and _how_.
+`SELF_IMPROVEMENT.md` is the lessons log.
+
+## Ground rules
+
+1. **The board is the source of truth for work.** GitHub Project "Your Golf
+   Buddy" (see `PROCESS.md` §0-1). An approved spec in `docs/specs/` is the
+   source of truth for what a feature does. Flag conflicts; don't resolve them
+   silently.
+2. One ticket = one issue = one branch (`<type>/<issue#>-<slug>`, type =
+   `feat`/`fix`/`chore`) = one PR against `main`, built in its own worktree
+   under `.worktrees/`. Stay inside the ticket's `files_touched`.
+3. **Merging to `main` deploys to production.** Never push to `main`. Never
+   merge. The human merges. Never stack PRs on ticket branches.
+4. Every PR links its issue (`Closes #N`), passes
+   `pnpm turbo run typecheck lint test build`, and pastes the summary output.
+5. Small PRs (~300 changed lines). Bigger: ask the ticketer to split.
+6. Don't add dependencies or edit `pnpm-lock.yaml` unless the ticket says so.
+   Need one? Comment on the issue, label `blocked`, stop.
+7. **Offline-first is the product.** Every change states its offline
+   behaviour. Nothing on the scoring path may wait on the network.
+8. **Old clients keep running.** Installed PWAs and the mobile WebView may run
+   yesterday's JS against today's services. Contract and D1 changes are
+   additive (expand, then contract in a later release).
+9. Blocked or ambiguous: comment on the issue, label `blocked`, stop. Don't
+   guess on requirements.
+10. **Secrets.** Never read or print `.env`, `.env.*` (except `.env.example`),
+    `.dev.vars`, `apps/web/stuff`, tokens or keys. Never put a secret in a
+    prompt, issue, commit, PR or log. Never type a key into a `!` command; use
+    `wrangler secret put` interactively.
+11. Check `git status` before writing; never delete or overwrite files you
+    didn't create. Never commit or delete `local/`.
+12. **Honesty about verification.** Never say "verified", "tested" or "works"
+    unless you ran the check in this session and can show the output. Quote
+    real totals (passed and failed). State what you did NOT check. Mistakes
+    (yours, other agents', tests') go in `docs/REVIEW_LOG.md`.
+13. **The human must be able to defend every line.** Small functions, plain
+    names, comments only where the _why_ isn't obvious, no clever
+    abstractions. In PRs, point out the risky parts and how to check them.
+14. **Never bypass the gates.** No `--no-verify`, no `.only`/`.skip` in merged
+    tests, no disabling a CI step to go green. Fix the cause.
+15. Log real process problems in `SELF_IMPROVEMENT.md`, each with an ACTION
+    that changes a file.
+
+## Roles (each is `.claude/agents/<name>.md`)
+
+| Role              | Tools                               | Job |
+| ----------------- | ----------------------------------- | --- |
+| **orchestrator**  | all                                 | Runs `PROCESS.md`. Owns the board, worktrees, gates, independent checks, deploy watch. Doesn't write feature code. |
+| **pm**            | Read, Write, Edit, Grep, Glob       | Writes the spec in `docs/specs/` from an issue: stories, scope, non-goals, acceptance criteria, offline behaviour, assumptions, risks. Applies the roadmap guardrail. Proposes, never decides, scope. |
+| **architect**     | Read, Write, Edit, Grep, Glob, Bash | Fills the spec's Design section: what changes where, Dexie/D1 schema, `@ygb/shared` contract delta, backward-compat and migration plan, flags, rollback, what was deliberately not built. |
+| **ticketer**      | Read, Write, Edit, Grep, Glob       | Fills the spec's Tickets table: S/M tickets, disjoint `files_touched`, checkable criteria, dependencies. Contract tickets first. |
+| **developer**     | Read, Write, Edit, Grep, Glob, Bash | Implements exactly one ticket in its worktree, with tests (services) or a written manual check (web). Reports done with check output. Doesn't push or open the PR. |
+| **sync-engineer** | Read, Write, Edit, Grep, Glob, Bash | Developer for anything touching `services/profile-sync`, the sync types in `packages/shared`, or `apps/web/lib/cloud-sync.ts`. Owns auth scoping, migrations, push/pull semantics. |
+| **reviewer**      | Read, Grep, Glob, Bash              | Read-only diff review: criteria met, correctness, edge cases, offline and old-client behaviour, tests meaningful, security (auth scoping, secrets), scope creep. Ranks blocker / should-fix / nit. Lists 2-3 "read this closely" items. |
+| **ui-auditor**    | Read, Grep, Glob, Bash              | Read-only: Broadsheet design rules (below), outdoor legibility, glare mode, 44px targets, keyboard/VoiceOver, labels, focus, contrast. Blockers fixed before a UI PR opens. |
+| **tester**        | Read, Write, Edit, Grep, Glob, Bash | Adds missing tests (tests-only PRs), smoke-tests the live URLs after deploy, fills the spec's Verification table with evidence, writes `HUMAN TODO` steps. |
+
+## Models
+
+The human is on a usage-limited Claude plan, so tokens matter.
+
+- **Orchestrator and judgment roles** (pm, architect, ticketer, reviewer,
+  ui-auditor, sync-engineer): the session model (Opus), `model: inherit`.
+- **developer and tester**: `model: sonnet`. A weaker implementer is fine
+  because the independent check and the reviewers catch problems; a weaker
+  reviewer is not.
+- Default parallelism is **2** concurrent subagents.
 
 ## What this is
 
@@ -88,6 +157,31 @@ Node 22, pnpm 10. `apps/mobile` uses its own `npm install` (not the workspace).
   dev only — it breaks `next build` if it runs there.
 - Deploy jobs in `.github/workflows/deploy.yml` are gated on the repo variable
   `CLOUDFLARE_ACCOUNT_ID` being set. Until then only `ci.yml` runs.
+- **Merging to `main` runs `wrangler d1 migrations apply --remote`** before the
+  profile-sync deploy. A bad migration hits production data with no staging in
+  between, and `wrangler rollback` doesn't undo it. Migrations are additive
+  only, and get the `migration` label.
+- The Golf Buddy Pass is **built but dark** behind `PUBLIC_PASS_ENABLED`,
+  `NEXT_PUBLIC_PASS_ENABLED`, `PASS_ENABLED`, `PASS_ENFORCED` (see
+  `docs/pass.md`). Flipping any of them is a human decision.
+- `apps/web` has **no unit test runner** (only `profile-sync` and `course-ls`
+  run vitest). Web tickets ship a written manual check until one is added.
+- pnpm workspaces don't resolve through the parent repo from a worktree: run
+  `pnpm install --frozen-lockfile` in each new `.worktrees/<n>`.
+- Dev servers use fixed ports (3002 / 8787 / 8788). Parallel agents must pass
+  their own `--port` or one run silently tests another worktree's build.
+
+## Broadsheet design rules (apps/web and sites/marketing)
+
+Tokens live in `apps/web/app/globals.css` and `sites/marketing/src/styles/global.css`.
+
+- **No dark mode, ever.** The app is used outdoors in direct sun.
+- **Every state survives greyscale.** Magenta (`--bs-state`) only reinforces a
+  luminance change. Cyan (`--bs-accent`) is the text caret only.
+- Controls are "keys": 1.5px ink border, 2px radius, weight 600. Selected =
+  inverted to ink plus inset magenta bar. 44px minimum hit target; keys 52-78px.
+- Glare mode (`data-glare="on"` on `<html>`): ink and paper only, +15% type, keys ≥60px.
+- **System fonts only.** No webfonts.
 
 ## Before you finish
 
@@ -95,6 +189,8 @@ Node 22, pnpm 10. `apps/mobile` uses its own `npm install` (not the workspace).
 2. If you touched the sync contract: `@ygb/shared` rebuilt, both sides updated.
 3. If you touched a `wrangler.jsonc`: ran `cf-typegen` and committed the result.
 4. Docs updated if behaviour or setup changed (`docs/deploy.md`, the app README).
+5. Working a ticket: the independent check in `PROCESS.md` §4.5 passed, review
+   findings logged in `docs/REVIEW_LOG.md`, PR opened with the template.
 
 
 ## Rules

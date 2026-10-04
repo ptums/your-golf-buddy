@@ -30,6 +30,12 @@ docs/           Architecture, deployment, roadmap
 
 Each app has its own README with detail. AI agents: see [`AGENTS.md`](./AGENTS.md).
 
+**How work happens:** an agentic, human-gated workflow. Work is tracked on the
+[Your Golf Buddy project board](https://github.com/users/ptums/projects/3);
+[`PROCESS.md`](./PROCESS.md) is the playbook (say _"run process.md on #N"_,
+_"work the board"_ or _"fix #N"_ to Claude Code), subagents live in
+`.claude/agents/`, and lessons go in [`SELF_IMPROVEMENT.md`](./SELF_IMPROVEMENT.md).
+
 ## How the pieces fit
 
 ```
@@ -114,6 +120,9 @@ Cloudflare. First-time Cloudflare account / D1 / secrets setup is in
 
 | Path | Contents |
 | ---- | -------- |
+| [`PROCESS.md`](./PROCESS.md)             | Orchestrator playbook: gates, board, review, deploy |
+| [`docs/specs/`](./docs/specs/TEMPLATE.md) | One spec per feature (template inside) |
+| [`docs/REVIEW_LOG.md`](./docs/REVIEW_LOG.md) | Every mistake found in review, and its fix |
 | [`docs/deploy.md`](./docs/deploy.md)     | Cloudflare setup, secrets, how the workflows work |
 | [`docs/identity.md`](./docs/identity.md) | The anonymous-profile model (current); replaces the dropped Clerk/JWT docs |
 | [`docs/roadmap.md`](./docs/roadmap.md)   | Phased solo-dev plan |
